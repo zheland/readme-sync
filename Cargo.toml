@@ -1,0 +1,81 @@
+[package]
+name = "readme-sync"
+version = "0.0.1"
+authors = ["Andrey Zheleznov <zheland.net@gmail.com>"]
+edition = "2018"
+description = "Checks that your readme and documentation are synchronized"
+readme = "README.md"
+repository = "https://github.com/zheland/readme-sync"
+documentation = "https://docs.rs/readme-sync"
+license = "MIT OR Apache-2.0"
+categories = ["development-tools::testing"]
+keywords = ["assert", "test", "sync", "readme", "docs"]
+
+[features]
+default = [
+    "alloc",
+    "codemap",
+    "codemap-diagnostic",
+    "glob",
+    "proc-macro2",
+    "proc-macro2-span-locations",
+    "pulldown-cmark",
+    "serde",
+    "std",
+    "syn",
+    "thiserror",
+    "toml"
+]
+alloc = []
+proc-macro2-span-locations = ["proc-macro2/span-locations"]
+std = []
+
+[dependencies.codemap]
+version = "0.1"
+optional = true
+
+[dependencies.codemap-diagnostic]
+version = "0.1"
+optional = true
+
+[dependencies.glob]
+version = "0.3"
+optional = true
+
+[dependencies.platforms]
+version = "0.2"
+optional = true
+
+[dependencies.proc-macro2]
+version = "1.0"
+optional = true
+default-features = false
+
+[dependencies.pulldown-cmark]
+version = "0.7"
+optional = true
+default-features = false
+
+[dependencies.serde]
+version = "1.0"
+optional = true
+features = ["derive"]
+
+[dependencies.syn]
+version = "1.0"
+optional = true
+features = ["full", "extra-traits"]
+
+[dependencies.thiserror]
+version = "1.0"
+optional = true
+
+[dependencies.toml]
+version = "0.5"
+optional = true
+
+[dev-dependencies]
+anyhow = "1.0"
+
+[package.metadata.docs.rs]
+all-features = true
