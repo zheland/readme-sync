@@ -196,6 +196,11 @@ impl<'a, P, M> CMarkDocs<P, M> {
         self.map(|data| data.add_title(text))
     }
 
+    /// Remove section with the specified heading text and level and its subsections.
+    pub fn remove_section(self, heading: &str, level: u32) -> Self {
+        self.map(|data| data.remove_section(heading, level))
+    }
+
     /// Remove the specified fenced code block tag.
     pub fn remove_codeblock_tag(self, tag: &str) -> CMarkDocs<P, M> {
         self.map(|data| data.remove_codeblock_tag(tag))
