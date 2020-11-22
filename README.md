@@ -52,7 +52,6 @@ fn readme_sync_test() {
     let docs = CMarkDocs::from_package_and_config(&package, &config).unwrap();
 
     let readme = readme
-        .concat_texts()
         .remove_badges_paragraph()
         .remove_documentation_section()
         .disallow_absolute_repository_blob_links()
@@ -61,7 +60,6 @@ fn readme_sync_test() {
         .unwrap();
 
     let docs = docs
-        .concat_texts()
         .increment_heading_levels()
         .add_package_title()
         .remove_codeblock_rust_test_tags()

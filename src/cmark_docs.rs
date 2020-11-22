@@ -166,7 +166,11 @@ impl<'a, P, M> CMarkDocs<P, M> {
 
     /// Concatenate adjacent text events.
     ///
-    /// After readme and docs parsing some text events remain ununited.
+    /// Use this transformation if you deleted some nodes manually
+    /// and want to merge the neighboring text nodes.
+    ///
+    /// This transformation is always applied right after
+    /// readme and docs parsing, because some text events remain ununited.
     /// For example Rust attribute parser generate seperate text events
     /// for every line of source code, and pulldown_cmark generate
     /// seperate text events for character entity reference.
