@@ -39,6 +39,8 @@ impl<'a> Config<'a> {
     }
 
     /// Add target_arch, target_os and target_env `Config` options from the specified target.
+    ///
+    /// This method require non-default feature `platforms`.
     #[cfg(feature = "platforms")]
     pub fn with_target_arch_os_env(mut self, target: &str) -> Self {
         if let Some(platform) = platforms::find(target) {
