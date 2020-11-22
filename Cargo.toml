@@ -1,6 +1,6 @@
 [package]
 name = "readme-sync"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Andrey Zheleznov <zheland.net@gmail.com>"]
 edition = "2018"
 description = "Checks that your readme and documentation are synchronized"
