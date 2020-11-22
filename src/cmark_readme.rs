@@ -159,6 +159,16 @@ impl<'a, P, M> CMarkReadme<P, M> {
         self.map(|data| data.remove_section(heading, level))
     }
 
+    /// Remove the specified fenced code block tag.
+    pub fn remove_codeblock_tag(self, tag: &str) -> CMarkReadme<P, M> {
+        self.map(|data| data.remove_codeblock_tag(tag))
+    }
+
+    /// Remove the specified fenced code block tags.
+    pub fn remove_codeblock_tags(self, tags: &[&str]) -> CMarkReadme<P, M> {
+        self.map(|data| data.remove_codeblock_tags(tags))
+    }
+
     /// Remove sections with heading `Documentation` and level 2.
     pub fn remove_documentation_section(self) -> Self {
         self.map(|data| data.remove_documentation_section())
