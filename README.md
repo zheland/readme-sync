@@ -86,16 +86,25 @@ FAQ section for more details.
 
 ## Feature Flags
 
-By default, all crate features are enabled.
-
-All crate dependencies are optional and
-therefore can be enabled (default) or disabled by features:
-`codemap`, `codemap-diagnostic`, `glob`, `proc-macro2`, `proc-macro2-span-locations`
-`pulldown-cmark`, `serde`, `syn`, `thiserror`, `toml`.
-
-Also, it has `proc-macro2-span-locations` (default) feature
-that enable `proc-macro2/span-locations` feature and allow the crate
-to show the locations of errors for doc-attributes.
+- `codemap` (enabled by default): Enables `codemap` dependency and required
+  for `assert_sync` and other diagnostic functions.
+- `codemap-diagnostic` (enabled by default): Enables `codemap-diagnostic` dependency
+  and required for `assert_sync` and other diagnostic functions.
+- `glob` (enabled by default): Enables `gloc` dependency and required
+  for badges detection and methods like `CMarkReadme::remove_badges_paragraph`.
+- `platforms`: Enables `platforms` dependency and method `Config::with_target_arch_os_env`.
+- `proc-macro2` (enabled by default): Enables `proc-macro2` dependency
+  with `span-locations` feature that allows the crate
+  to show the errors location for source Rust files.
+- `pulldown-cmark` (enabled by default): Enables `pulldown-cmark` dependency
+  and required for almost everything except manifest
+  and documentation parsing and some utility functions.
+- `serde` (enabled by default): Enables `serde` dependency
+  and required for manifest deserializing.
+- `syn` (enabled by default): Enables `syn` dependency and required for documentation parsing.
+- `thiserror` (enabled by default): Enables `thiserror` dependency
+  and required by all functions and methods that can return errors.
+- `toml` (enabled by default): Enables `toml` dependency and required for manifest parsing.
 
 ## Other crates
 
