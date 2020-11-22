@@ -17,14 +17,12 @@ default = [
     "codemap-diagnostic",
     "glob",
     "proc-macro2",
-    "proc-macro2-span-locations",
     "pulldown-cmark",
     "serde",
     "syn",
     "thiserror",
     "toml"
 ]
-proc-macro2-span-locations = ["proc-macro2/span-locations"]
 
 [dependencies.codemap]
 version = "0.1"
@@ -46,6 +44,7 @@ optional = true
 version = "1.0"
 optional = true
 default-features = false
+features = ["span-locations"]
 
 [dependencies.pulldown-cmark]
 version = "0.7"

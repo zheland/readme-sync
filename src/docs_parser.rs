@@ -35,14 +35,14 @@ pub struct DocsLineColumn {
 
 #[cfg(feature = "syn")]
 impl From<&syn::LitStr> for DocsItem {
-    #[cfg(feature = "proc-macro2-span-locations")]
+    #[cfg(feature = "proc-macro2")]
     fn from(lit_str: &syn::LitStr) -> Self {
         let text = Cow::from(lit_str.value());
         let span = Some(DocsSpan::from(lit_str.span()));
         Self { text, span }
     }
 
-    #[cfg(not(feature = "proc-macro2-span-locations"))]
+    #[cfg(not(feature = "proc-macro2"))]
     fn from(lit_str: &syn::LitStr) -> Self {
         let text = Cow::from(lit_str.value());
         let span = None;
@@ -59,7 +59,7 @@ impl From<&'static str> for DocsItem {
     }
 }
 
-#[cfg(feature = "proc-macro2-span-locations")]
+#[cfg(feature = "proc-macro2")]
 impl From<proc_macro2::Span> for DocsSpan {
     fn from(span: proc_macro2::Span) -> Self {
         let start = span.start();
