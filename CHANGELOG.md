@@ -8,10 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.1] - 2020-11-21
 ### Added
-- Package and manifest loading.
+- Package and manifest parsing.
 - Readme and documentation parsing.
 - Markdown transformations.
-- Synchronization statuc diagnostics.
+- Synchronization status diagnostics.
 
 [Unreleased]: https://github.com/zheland/readme-sync/compare/v0.0.1...HEAD
 [0.0.1]: https://github.com/zheland/readme-sync/releases/tag/v0.0.1
