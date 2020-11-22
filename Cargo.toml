@@ -13,7 +13,6 @@ keywords = ["assert", "test", "sync", "readme", "docs"]
 
 [features]
 default = [
-    "alloc",
     "codemap",
     "codemap-diagnostic",
     "glob",
@@ -21,14 +20,11 @@ default = [
     "proc-macro2-span-locations",
     "pulldown-cmark",
     "serde",
-    "std",
     "syn",
     "thiserror",
     "toml"
 ]
-alloc = []
 proc-macro2-span-locations = ["proc-macro2/span-locations"]
-std = []
 
 [dependencies.codemap]
 version = "0.1"

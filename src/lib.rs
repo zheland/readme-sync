@@ -273,7 +273,7 @@ pub use cmark_readme::CMarkReadme;
 pub use cmark_readme::CMarkReadmeFromPackageError;
 #[cfg(feature = "codemap")]
 pub use codemap_files::CodemapFiles;
-#[cfg(all(feature = "codemap", feature = "codemap-diagnostic",))]
+#[cfg(all(feature = "codemap", feature = "codemap-diagnostic"))]
 pub use codemap_spans::CodemapSpans;
 pub use config::Config;
 #[cfg(all(feature = "syn", feature = "thiserror",))]

@@ -1,5 +1,4 @@
 #![cfg(all(
-    any(feature = "alloc", feature = "std"),
     feature = "codemap",
     feature = "codemap-diagnostic",
     feature = "pulldown-cmark",

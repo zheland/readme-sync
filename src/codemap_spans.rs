@@ -1,8 +1,4 @@
-#![cfg(all(
-    any(feature = "alloc", feature = "std"),
-    feature = "codemap",
-    feature = "codemap-diagnostic"
-))]
+#![cfg(all(feature = "codemap", feature = "codemap-diagnostic"))]
 
 use std::vec::Vec;
 
