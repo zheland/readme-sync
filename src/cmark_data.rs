@@ -162,6 +162,7 @@ impl CMarkData {
 
     /// Removes first paragraph that contains only images and image-links,
     /// if the specified predicate returns true when passing image urls to it.
+    #[allow(clippy::match_like_matches_macro)] // requires minimum rustc version 1.42.0
     pub fn remove_images_only_paragraph<P>(self, mut predicate: P) -> Self
     where
         P: FnMut(&[&str]) -> bool,
@@ -186,7 +187,11 @@ impl CMarkData {
             if !paragraph.is_empty() {
                 if is_image {
                     let event = node.event();
-                    is_image = !matches!(event, Some(Event::End(Tag::Image(..))));
+                    is_image = if let Some(Event::End(Tag::Image(..))) = event {
+                        false
+                    } else {
+                        true
+                    };
                     paragraph.push(node);
                 } else {
                     paragraph.push(node);
@@ -420,13 +425,22 @@ fn is_fragment(url: &str) -> bool {
     url.starts_with('#')
 }
 
+#[allow(clippy::match_like_matches_macro)] // requires minimum rustc version 1.42.0
 fn is_url_with_scheme(url: &str) -> bool {
     if let Some(colon) = url.find(':') {
         colon > 0
-            && matches!(url.as_bytes()[0], b'a'..=b'z' | b'A'..=b'Z')
-            && url.as_bytes()[1..colon].iter().all(
-                |ch| matches!(ch, b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'+' | b'.' | b'-'),
-            )
+            && if let b'a'..=b'z' | b'A'..=b'Z' = url.as_bytes()[0] {
+                true
+            } else {
+                false
+            }
+            && url.as_bytes()[1..colon].iter().all(|ch| {
+                if let b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'+' | b'.' | b'-' = ch {
+                    true
+                } else {
+                    false
+                }
+            })
     } else {
         false
     }
