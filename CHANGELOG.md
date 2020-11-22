@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Text nodes are automatically concatenated after parsing.
 - Minimum supported rustc version is reduced from 1.42.0 to 1.40.0.
-` Unused features `alloc` and `std` are removed.
+- Unused features `alloc` and `std` are removed.
 - Feature `proc-macro2-span-locations` is replaced to `proc-macro2`.
 - Better readme and documentation front page.
 - Better features description.
