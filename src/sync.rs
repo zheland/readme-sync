@@ -321,8 +321,8 @@ fn event_diff_notes(
     }
 
     vec![
-        text_note(format!("readme node: {:#?}", readme_event)),
-        text_note(format!("docs   node: {:#?}", docs_event)),
+        text_note(format!("readme node: {}", CMarkDisplay(readme_event))),
+        text_note(format!("docs   node: {}", CMarkDisplay(docs_event))),
     ]
 }
 
