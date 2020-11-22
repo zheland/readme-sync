@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2020-11-22
+### Changed
+- Update `platforms` and `pulldown-cmark` dependencies.
+- Use the exact version for dependencies with version 0.y.z.
+
 ## [0.1.0] - 2020-11-22
 ### Added
 - Crate version tests.
@@ -29,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Markdown transformations.
 - Synchronization status diagnostics.
 
-[Unreleased]: https://github.com/zheland/readme-sync/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/zheland/readme-sync/compare/v0.0.1...v3.1.0
+[Unreleased]: https://github.com/zheland/readme-sync/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/zheland/readme-sync/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/zheland/readme-sync/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/zheland/readme-sync/releases/tag/v0.0.1
