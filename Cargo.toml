@@ -75,7 +75,7 @@ version = "0.5"
 optional = true
 
 [dev-dependencies]
-anyhow = "1.0"
+version-sync = "0.9"
 
 [package.metadata.docs.rs]
 all-features = true

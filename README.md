@@ -54,6 +54,7 @@ fn readme_sync_test() {
     let readme = readme
         .remove_badges_paragraph()
         .remove_documentation_section()
+        .remove_codeblock_tag("no_sync")
         .disallow_absolute_repository_blob_links()
         .unwrap()
         .use_absolute_repository_blob_urls()
@@ -150,7 +151,7 @@ This will help you avoid feature injection from dev-dependencies.
 In order to use `readme-sync` functionality in this case,
 you need to add a feature that reenables `readme-sync` default features
 and can be used to run readme synchronization integration tests:
-```toml
+```toml,no_sync
 [features]
 test-readme-sync = ["readme-sync/default"]
 ```

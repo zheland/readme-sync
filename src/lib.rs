@@ -75,6 +75,7 @@
 //!    let readme = readme
 //!        .remove_badges_paragraph()
 //!        .remove_documentation_section()
+//!        .remove_codeblock_tag("no_sync")
 //!        .disallow_absolute_repository_blob_links()
 //!        .unwrap()
 //!        .use_absolute_repository_blob_urls()
