@@ -3,14 +3,14 @@
 //!
 //! # About
 //!
-//! This crate provides several abstractions for readme and documentation content
+//! This crate provides several abstractions for readme and documentation front page content
 //! as well as multiple readme and documentation parsing and transformation functions.
-//! With them, readme and documentation are transformed into a set of markdown nodes
-//! that are expected to be the same.
+//! With them, readme and documentation can be converted
+//! to a set of markup nodes that are expected to be the same.
 //! Their equality can be checked with the `assert_sync` function,
 //! which also provides useful diagnostic messages about the differences found.
 //!
-//! It accepts not only inner doc-comments (`//!`) but also
+//! Documentation parser accepts not only inner doc-comments (`//!`) but also
 //! inner doc-attributes (`#[!cfg(...)]` and `#[!cfg_attr(...)]`).
 //! This is useful when some doc-tests require certain features to compile and run.
 //!
@@ -23,14 +23,13 @@
 //! readme-sync = "0.0.1"
 //! ```
 //!
-//! Note that `cargo build` and `cargo test` use features from dev-dependencies,
-//! so if you want to test your crate without them (for example in `no_std` environment)
-//! you can use `readme-sync` with `default-features = false`.
-//! See [this](#how-to-prevent-readme-sync-dependency-features-enabled-for-dependencies-of-my-crate)
-//! FAQ section for more details.
-//!
 //! Then add an integration test using the necessary readme and docs modifiers,
 //! and check their synchronization using the `assert_sync` function.
+//!
+//! The example below is used to test the synchronization
+//! of the readme and documentation of this crate.
+//! You can copy it and follow the diagnostic messages
+//! to adjust the modifiers used and to correct your readme and documentation.
 //!
 #![cfg_attr(
     all(
@@ -98,21 +97,29 @@
 //!# */
 //!```
 //!
+//! Note that both `cargo build` and `cargo test` enable features from dev-dependencies,
+//! so if you want to test your crate without them (for example in `no_std` environment)
+//! you can use `readme-sync` with `default-features = false`.
+//! See [this](#how-to-prevent-readme-sync-dependency-features-enabled-for-dependencies-of-my-crate)
+//! FAQ section for more details.
+//!
 //! # Feature Flags
 //!
 //! By default, all crate features are enabled.
 //!
-//! All crate dependencies are optional and are therefore enabled by features:
+//! All crate dependencies are optional and
+//! therefore can be enabled (default) or disabled by features:
 //! `codemap`, `codemap-diagnostic`, `glob`, `proc-macro2`, `proc-macro2-span-locations`
 //! `pulldown-cmark`, `serde`, `syn`, `thiserror`, `toml`.
 //!
-//! Also, it has `proc-macro2-span-locations` feature that enable `proc-macro2/span-locations`
-//! feature and allow the crate to show the locations of errors for doc-attributes.
+//! Also, it has `proc-macro2-span-locations` (default) feature
+//! that enable `proc-macro2/span-locations` feature and allow the crate
+//! to show the locations of errors for doc-attributes.
 //!
 //! # Other crates
 //!
 //! - [`cargo-sync-readme`]: generates readme section from documentation.
-//!   It does not support doc-attributes and does not provide diagnostics.
+//!   It does not support doc-attributes and does not provide diagnostics for differences found.
 //!   But if you just need to synchronize readme and docs text
 //!   or check if they are synchronized it might be a better choice.
 //! - [`version-sync`]: crate makes it easy to add an integration test that checks
@@ -120,16 +127,16 @@
 //!
 //! # FAQ
 //!
-//! ## Why is the example integration test so long and there is no function that does all this by itself?
+//! ## Why is the example integration test so long and there is no function that would do it all at once?
 //!
-//! Currently, this crate is at an early stage of development
-//! and common readme and documentation transformations are not yet stabilized.
+//! Readme and documentation transformations are very different
+//! between different crates and the API of this crate is not yet stabilized.
 //!
-//! At the moment, however, it supports wide customization.
+//! At the moment, however, it supports extensive customization.
 //! You can specify the paths to readme and docs, their contents,
-//! the features and transformations used, or use your own transformations.
+//! the features and transformations used, and use your own transformations.
 //!
-//! Any kind of feedback is welcome!
+//! So any feedback is welcome!
 //!
 //! ## Why use `syn` instead of just parsing documentation comments?
 //!
@@ -140,17 +147,17 @@
 //!
 //! It simplifies the Markdown transformations.
 //! Transformations are necessary,
-//! because of some differences between readme content and documentation
+//! because of some differences between readme content and documentation front page
 //! including: the presence of a crate name, different heading levels,
 //! the presence of badges, different relative url root, etc.
 //!
 //! ## Why are all dependencies optional?
 //!
-//! By default, Rust compiler enable features from dev-dependencies for normal dependencies
+//! By default, Rust compiler enables features from dev-dependencies for normal dependencies
 //! for commands like `cargo test` and `cargo build`.
 //! As a result, the features used by dev-dependencies are implicitly enabled during testing.
-//! Because in `readme-sync` all dependencies are optional,
-//! you can easily protect your crate from implicitly enabled common features.
+//! Because all `readme-sync` dependencies are optional,
+//! you can easily protect your crate from implicitly enabled common features when testing.
 //!
 //! See [rust-lang/cargo#7916](https://github.com/rust-lang/cargo/issues/7916) for more details.
 //!
