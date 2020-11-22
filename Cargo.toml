@@ -37,7 +37,7 @@ version = "0.3"
 optional = true
 
 [dependencies.platforms]
-version = "0.2"
+version = "1.0"
 optional = true
 
 [dependencies.proc-macro2]
@@ -47,7 +47,7 @@ default-features = false
 features = ["span-locations"]
 
 [dependencies.pulldown-cmark]
-version = "0.7"
+version = "0.8"
 optional = true
 default-features = false
 
