@@ -111,7 +111,7 @@ fn merge_text_nodes(nodes: Vec<Arc<CMarkItem>>, text: String) -> Option<Arc<CMar
     match nodes.len() {
         0 => None,
         1 => Some(nodes.into_iter().next().unwrap()),
-        _ => Some(nodes.as_modified(
+        _ => Some(nodes.into_modified(
             Event::Text(CowStr::Boxed(text.into_boxed_str())),
             Cow::from("concat_texts()"),
         )),
@@ -139,7 +139,7 @@ impl CMarkData {
                 _ => None,
             };
             if let Some(event) = event {
-                node.as_modified(event, Cow::from("increment_heading_levels()"))
+                node.into_modified(event, Cow::from("increment_heading_levels()"))
             } else {
                 node
             }
@@ -207,10 +207,10 @@ impl CMarkData {
                             let urls: Vec<String> = take(&mut image_urls);
                             let urls: Vec<&str> = urls.iter().map(|url| url.as_str()).collect();
                             if !urls.is_empty() && predicate(&urls) {
-                                result.push(
-                                    take(&mut paragraph)
-                                        .as_removed(Cow::from("remove_images_only_paragraphs()")),
-                                );
+                                result
+                                    .push(take(&mut paragraph).into_removed(Cow::from(
+                                        "remove_images_only_paragraphs()",
+                                    )));
                                 is_already_removed = true;
                             } else {
                                 result.append(&mut paragraph);
@@ -269,7 +269,7 @@ impl CMarkData {
                 if let Some(Event::Start(Tag::Heading(node_level))) = event {
                     if *node_level <= level {
                         let (mut section, is_removed) =
-                            as_removed_section_if_matched(take(&mut section), &heading, level);
+                            into_removed_section_if_matched(take(&mut section), &heading, level);
                         result.append(&mut section);
                         is_already_removed = is_removed;
                     }
@@ -282,7 +282,7 @@ impl CMarkData {
             }
         }
 
-        result.append(&mut as_removed_section_if_matched(take(&mut section), &heading, level).0);
+        result.append(&mut into_removed_section_if_matched(take(&mut section), &heading, level).0);
 
         Self(result)
     }
@@ -293,7 +293,7 @@ impl CMarkData {
     }
 }
 
-fn as_removed_section_if_matched(
+fn into_removed_section_if_matched(
     section: Vec<Arc<CMarkItem>>,
     heading: &str,
     level: u32,
@@ -303,7 +303,7 @@ fn as_removed_section_if_matched(
 
     if is_matched_section(&section, heading, level) {
         (
-            vec![section.as_removed(Cow::from(std::format!(
+            vec![section.into_removed(Cow::from(std::format!(
                 "remove_section(name = \"{}\", level = {})",
                 heading,
                 level
@@ -412,7 +412,7 @@ impl CMarkData {
                 _ => None,
             };
             match event {
-                Some(event) => node.as_modified(
+                Some(event) => node.into_modified(
                     event,
                     Cow::from(std::format!("with_absolute_urls(prefix = \"{}\")", prefix)),
                 ),
@@ -489,7 +489,7 @@ impl CMarkData {
                 _ => None,
             };
             match event {
-                Some(event) => node.as_modified(
+                Some(event) => node.into_modified(
                     event,
                     Cow::from(std::format!("remove_codeblock_tags(tags = {:?})", tags)),
                 ),
@@ -547,7 +547,7 @@ impl CMarkData {
                 _ => None,
             };
             match event {
-                Some(event) => node.as_modified(
+                Some(event) => node.into_modified(
                     event,
                     Cow::from(std::format!("use_default_codeblock_tag(tag = \"{}\")", tag)),
                 ),
@@ -605,7 +605,7 @@ impl CMarkData {
                             .collect();
                         let text = text.join("\n");
                         let event = Event::Text(CowStr::Boxed(text.into_boxed_str()));
-                        return node.as_modified(event, Cow::from("remove_hidden_rust_code()"));
+                        return node.into_modified(event, Cow::from("remove_hidden_rust_code()"));
                     }
                 }
                 _ => {}

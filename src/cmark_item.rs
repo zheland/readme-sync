@@ -138,13 +138,13 @@ impl<'a> CMarkItem {
 /// A helper trait to create an event as modified from other events.
 pub trait CMarkItemAsModified {
     /// Сreate an event as modified from other events.
-    fn as_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem>;
+    fn into_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem>;
 }
 
 /// A helper trait to mark events as removed.
 pub trait CMarkItemAsRemoved {
     /// Mark events as removed.
-    fn as_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem>;
+    fn into_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem>;
 }
 
 /// A helper trait to mark an event with the specified note.
@@ -154,7 +154,7 @@ pub trait CMarkItemWithNote {
 }
 
 impl CMarkItemAsModified for Arc<CMarkItem> {
-    fn as_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem> {
+    fn into_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem> {
         Arc::new(CMarkItem::Modified {
             nodes: Box::new([self]),
             event,
@@ -164,7 +164,7 @@ impl CMarkItemAsModified for Arc<CMarkItem> {
 }
 
 impl CMarkItemAsModified for Box<[Arc<CMarkItem>]> {
-    fn as_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem> {
+    fn into_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem> {
         assert!(!self.is_empty());
         Arc::new(CMarkItem::Modified {
             nodes: self,
@@ -175,7 +175,7 @@ impl CMarkItemAsModified for Box<[Arc<CMarkItem>]> {
 }
 
 impl CMarkItemAsModified for Vec<Arc<CMarkItem>> {
-    fn as_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem> {
+    fn into_modified(self, event: Event<'static>, note: Cow<'static, str>) -> Arc<CMarkItem> {
         assert!(!self.is_empty());
         Arc::new(CMarkItem::Modified {
             nodes: self.into_boxed_slice(),
@@ -186,7 +186,7 @@ impl CMarkItemAsModified for Vec<Arc<CMarkItem>> {
 }
 
 impl CMarkItemAsRemoved for Arc<CMarkItem> {
-    fn as_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem> {
+    fn into_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem> {
         Arc::new(CMarkItem::Removed {
             nodes: Box::new([self]),
             note,
@@ -195,14 +195,14 @@ impl CMarkItemAsRemoved for Arc<CMarkItem> {
 }
 
 impl CMarkItemAsRemoved for Box<[Arc<CMarkItem>]> {
-    fn as_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem> {
+    fn into_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem> {
         assert!(!self.is_empty());
         Arc::new(CMarkItem::Removed { nodes: self, note })
     }
 }
 
 impl CMarkItemAsRemoved for Vec<Arc<CMarkItem>> {
-    fn as_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem> {
+    fn into_removed(self, note: Cow<'static, str>) -> Arc<CMarkItem> {
         assert!(!self.is_empty());
         Arc::new(CMarkItem::Removed {
             nodes: self.into_boxed_slice(),

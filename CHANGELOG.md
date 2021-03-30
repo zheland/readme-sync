@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Fix prefixes from `as_` to `into_` for methods `as_modified`, `as_removed`,
+  and function `as_removed_section_if_matched`.
 
 ## [0.1.1] - 2020-11-22
 ### Changed
