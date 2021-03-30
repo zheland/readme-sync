@@ -43,7 +43,7 @@ impl<'a> Config<'a> {
     /// This method require non-default feature `platforms`.
     #[cfg(feature = "platforms")]
     pub fn with_target_arch_os_env(mut self, target: &str) -> Self {
-        if let Some(platform) = platforms::find(target) {
+        if let Some(platform) = platforms::Platform::find(target) {
             let _ = self.name_values.insert((
                 Cow::from("target_arch"),
                 Cow::from(platform.target_arch.as_str()),
