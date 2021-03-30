@@ -66,11 +66,11 @@ version = "1.0"
 optional = true
 
 [dependencies.toml]
-version = "0.5.7"
+version = "0.5.8"
 optional = true
 
 [dev-dependencies]
-version-sync = "0.9.1"
+version-sync = "0.9.2"
 
 [package.metadata.docs.rs]
 all-features = true
