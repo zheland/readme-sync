@@ -83,8 +83,8 @@ pub fn check_sync<P1, P2, M1, M2>(
 
             let codemap_files = Arc::new(codemap_files);
             return Err(CheckSyncError::MatchFailed(MatchFailed {
-                codemap_files,
                 diags,
+                codemap_files,
             }));
         }
     }

@@ -30,7 +30,7 @@ impl File {
 
     /// Creates file from the specified path and text.
     pub fn from_path_and_text(path: PathBuf, text: String) -> Self {
-        Self { text, path }
+        Self { path, text }
     }
 
     /// Returns file text.
