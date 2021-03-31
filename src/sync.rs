@@ -183,13 +183,26 @@ fn node_not_mached_diagnostic(
     let readme_event = readme_node.as_ref().and_then(|node| node.event());
     let docs_event = docs_node.as_ref().and_then(|node| node.event());
 
-    Diagnostic {
-        level: Level::Error,
-        message: format!(
-            "readme node `{}` does not match docs node `{}`",
+    let message = match (readme_event, docs_event) {
+        (Some(readme_event), Some(docs_event)) => format!(
+            "readme node\n`{}`\n does not match docs node\n`{}`",
             CMarkDisplay(readme_event),
             CMarkDisplay(docs_event)
         ),
+        (Some(readme_event), None) => format!(
+            "readme node\n`{}`\n does not match any docs node",
+            CMarkDisplay(readme_event)
+        ),
+        (None, Some(docs_event)) => format!(
+            "docs node\n`{}`\n does not match any readme node",
+            CMarkDisplay(docs_event)
+        ),
+        (None, None) => unreachable!(),
+    };
+
+    Diagnostic {
+        level: Level::Error,
+        message,
         code: None,
         spans: span_labels,
     }

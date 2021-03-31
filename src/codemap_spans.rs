@@ -80,7 +80,7 @@ impl<'a> Extend<CMarkSpan<'a>> for CodemapSpans<'_> {
                     self.span_labels.push(SpanLabel {
                         span,
                         style: SpanStyle::Primary,
-                        label: Some(item.note),
+                        label: None,
                     });
                 }
                 TextSource::FileDocs(file_docs) => {
@@ -91,7 +91,7 @@ impl<'a> Extend<CMarkSpan<'a>> for CodemapSpans<'_> {
                     self.span_labels.push(SpanLabel {
                         span,
                         style: SpanStyle::Primary,
-                        label: Some(item.note.clone()),
+                        label: None,
                     });
 
                     let file = file_docs.file();
@@ -104,7 +104,7 @@ impl<'a> Extend<CMarkSpan<'a>> for CodemapSpans<'_> {
                         self.span_labels.push(SpanLabel {
                             span,
                             style: SpanStyle::Secondary,
-                            label: Some(item.note),
+                            label: None,
                         });
                     }
                 }
