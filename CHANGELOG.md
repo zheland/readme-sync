@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.2.0] - 2021-03-31
 ### Changed
+- Better diagnostics readability.
 - Fix prefixes from `as_` to `into_` for methods `as_modified`, `as_removed`,
   and function `as_removed_section_if_matched`.
 
@@ -37,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Markdown transformations.
 - Synchronization status diagnostics.
 
-[Unreleased]: https://github.com/zheland/readme-sync/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/zheland/readme-sync/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/zheland/readme-sync/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/zheland/readme-sync/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/zheland/readme-sync/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/zheland/readme-sync/releases/tag/v0.0.1

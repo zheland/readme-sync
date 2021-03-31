@@ -20,7 +20,7 @@
 //!
 //! ```toml
 //! [dev-dependencies]
-//! readme-sync = "0.1.1"
+//! readme-sync = "0.2.0"
 //! ```
 //!
 //! Then add an integration test using the necessary readme and docs modifiers,
@@ -177,7 +177,7 @@
 //! Or, in any Rust release, you can disable all `readme-sync` dependencies with:
 //! ```toml
 //! [dev-dependencies.readme-sync]
-//! version = "0.1.1"
+//! version = "0.2.0"
 //! default-features = false
 //! ```
 //!
