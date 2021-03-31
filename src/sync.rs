@@ -59,13 +59,11 @@ pub fn check_sync<P1, P2, M1, M2>(
             use std::sync::Arc;
 
             let mut codemap_files = CodemapFiles::new();
-            let mut diags = Vec::new();
-
-            diags.push(node_not_mached_diagnostic(
+            let mut diags = std::vec![node_not_mached_diagnostic(
                 &mut codemap_files,
                 &readme_node,
                 &docs_node,
-            ));
+            )];
 
             diags.extend(
                 removed_nodes_note(&mut codemap_files, &readme_removed_nodes, "readme").into_iter(),
