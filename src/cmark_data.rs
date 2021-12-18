@@ -388,16 +388,40 @@ impl CMarkData {
 
     /// Convert all relative links into absolute ones using specified url prefix.
     pub fn with_absolute_urls(self, prefix: &str) -> Self {
-        use crate::CMarkItemAsModified;
-        use pulldown_cmark::CowStr;
-        use pulldown_cmark::{Event, Tag};
+        use std::format;
 
-        fn add_link_prefix<'a>(tag: &Tag<'a>, prefix: &str) -> Option<Tag<'a>> {
+        self.map_links(
+            |url| {
+                if !is_absolute_url(&url) && !is_fragment(&url) {
+                    Cow::from([prefix, &url].concat())
+                } else {
+                    Cow::from(url)
+                }
+            },
+            Cow::from(format!("with_absolute_urls(prefix = \"{}\")", prefix)),
+        )
+    }
+
+    /// Converts all links with function `func` applied to each link address.
+    pub fn map_links<F>(self, mut func: F, note: impl Into<Cow<'static, str>>) -> Self
+    where
+        for<'b> F: FnMut(&'b str) -> Cow<'b, str>,
+    {
+        use crate::CMarkItemAsModified;
+        use pulldown_cmark::{CowStr, Event, Tag};
+
+        fn map_link<'a, F>(tag: &Tag<'a>, mut func: F) -> Option<Tag<'a>>
+        where
+            for<'b> F: FnMut(&'b str) -> Cow<'b, str>,
+        {
             if let Tag::Link(ty, url, title) = tag {
-                if !is_absolute_url(url) && !is_fragment(url) {
+                let new_url = func(url.as_ref());
+                std::println!("from: {}\nto: {}", url.as_ref(), new_url.as_ref());
+                if url.as_ref() != new_url.as_ref() {
+                    let title = title.clone();
                     return Some(Tag::Link(
-                        *ty,
-                        CowStr::Boxed([prefix, url].concat().into_boxed_str()),
+                        ty.clone(),
+                        CowStr::from(new_url.into_owned()),
                         title.clone(),
                     ));
                 }
@@ -405,17 +429,15 @@ impl CMarkData {
             None
         }
 
+        let note = note.into();
         self.map(|node| {
             let event = match node.event() {
-                Some(Event::Start(tag)) => add_link_prefix(tag, &prefix).map(Event::Start),
-                Some(Event::End(tag)) => add_link_prefix(tag, &prefix).map(Event::End),
+                Some(Event::Start(tag)) => map_link(tag, &mut func).map(Event::Start),
+                Some(Event::End(tag)) => map_link(tag, &mut func).map(Event::End),
                 _ => None,
             };
             match event {
-                Some(event) => node.into_modified(
-                    event,
-                    Cow::from(std::format!("with_absolute_urls(prefix = \"{}\")", prefix)),
-                ),
+                Some(event) => node.into_modified(event, note.clone()),
                 None => node,
             }
         })

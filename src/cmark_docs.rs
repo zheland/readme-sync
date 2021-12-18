@@ -1,5 +1,6 @@
 #![cfg(feature = "pulldown-cmark")]
 
+use std::borrow::Cow;
 #[cfg(all(feature = "syn", feature = "thiserror"))]
 use std::path::Path;
 use std::sync::Arc;
@@ -296,6 +297,14 @@ impl<'a, P> CMarkDocs<P, &'a Manifest> {
             .clone()
             .ok_or(UseAbsolutePackageDocsUrlsError::DocsUrlNotFound)?;
         Ok(self.use_absolute_docs_urls(&name, &documentation))
+    }
+
+    /// Converts all links with function `func` applied to each link address.
+    pub fn map_links<F>(self, func: F, note: impl Into<Cow<'static, str>>) -> Self
+    where
+        for<'b> F: FnMut(&'b str) -> Cow<'b, str>,
+    {
+        self.map(|data| data.map_links(func, note))
     }
 }
 

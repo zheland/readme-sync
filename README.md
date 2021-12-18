@@ -44,6 +44,7 @@ to adjust the modifiers used and to correct your readme and documentation.
 #[test]
 fn readme_sync_test() {
     use readme_sync::{assert_sync, CMarkDocs, CMarkReadme, Config, Package};
+    use std::borrow::ToOwned;
 
     let package = Package::from_path(env!("CARGO_MANIFEST_DIR").into()).unwrap();
     let config = Config::from_package_docs_rs_features(&package);
@@ -65,6 +66,13 @@ fn readme_sync_test() {
         .remove_codeblock_rust_test_tags()
         .use_default_codeblock_rust_tag()
         .remove_hidden_rust_code()
+        .map_links(
+            |link| match link {
+                "CMarkDocs::map_links" => "struct.CMarkDocs.html#method.map_links".into(),
+                link => link.into(),
+            },
+            "workaround for intra-doc links",
+        )
         .disallow_absolute_package_docs_links()
         .unwrap()
         .use_absolute_package_docs_urls()
@@ -116,6 +124,12 @@ FAQ section for more details.
   that README.md and documentation are updated when the crate version changes.
 
 ## FAQ
+
+### Are rust intra-doc links supported?
+
+Currently intra-doc link resolution is not supported.
+References to structures in the documentation can be changed with [`CMarkDocs::map_links`].
+The pulldown cmark also requires the link address to be specified.
 
 ### Why is the example integration test so long and there is no function that would do it all at once?
 
@@ -207,6 +221,7 @@ for inclusion in the work by you, as defined in the Apache-2.0 license,
 shall be dual licensed as above, without any
 additional terms or conditions.
 
+[`CMarkDocs::map_links`]: https://docs.rs/readme-sync/*/readme_sync/struct.CMarkDocs.html#method.map_links
 [API Documentation]: https://docs.rs/readme-sync
 [`cargo-sync-readme`]: https://crates.io/crates/cargo-sync-readme
 [`version-sync`]: https://crates.io/crates/version-sync
