@@ -28,7 +28,7 @@ First, add the following to your `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-readme-sync = "0.2.0"
+readme-sync = "0.2.1"
 ```
 
 Then add an integration test using the necessary readme and docs modifiers,
@@ -172,7 +172,7 @@ If you use nightly Rust you can simply use `-Z features=dev_dep` flags.
 Or, in any Rust release, you can disable all `readme-sync` dependencies with:
 ```toml
 [dev-dependencies.readme-sync]
-version = "0.2.0"
+version = "0.2.1"
 default-features = false
 ```
 
