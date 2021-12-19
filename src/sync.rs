@@ -113,7 +113,7 @@ impl MatchFailed {
     pub fn emit_to_stderr_colored(&self) {
         use codemap_diagnostic::{ColorConfig, Emitter};
 
-        let mut emitter = Emitter::stderr(ColorConfig::Always, Some(&self.codemap_files.codemap()));
+        let mut emitter = Emitter::stderr(ColorConfig::Always, Some(self.codemap_files.codemap()));
         emitter.emit(&self.diags);
     }
 }
@@ -125,7 +125,7 @@ impl Display for MatchFailed {
 
         let mut raw = Vec::new();
         {
-            let mut emitter = Emitter::vec(&mut raw, Some(&self.codemap_files.codemap()));
+            let mut emitter = Emitter::vec(&mut raw, Some(self.codemap_files.codemap()));
             emitter.emit(&self.diags);
         }
         let msg = String::from_utf8_lossy(&raw);
@@ -241,8 +241,8 @@ fn event_diff_notes(
 
     use pulldown_cmark::{CodeBlockKind, Event, Tag};
 
-    let readme_event_name = get_event_name(&readme_event);
-    let docs_event_name = get_event_name(&docs_event);
+    let readme_event_name = get_event_name(readme_event);
+    let docs_event_name = get_event_name(docs_event);
     if readme_event_name != docs_event_name {
         return vec![
             text_note(std::format!(
@@ -256,11 +256,11 @@ fn event_diff_notes(
         ];
     }
 
-    let readme_tag = get_event_tag(&readme_event);
-    let docs_tag = get_event_tag(&docs_event);
+    let readme_tag = get_event_tag(readme_event);
+    let docs_tag = get_event_tag(docs_event);
     if let (Some(readme_tag), Some(docs_tag)) = (readme_tag, docs_tag) {
-        let readme_tag_name = get_tag_name(&readme_tag);
-        let docs_tag_name = get_tag_name(&docs_tag);
+        let readme_tag_name = get_tag_name(readme_tag);
+        let docs_tag_name = get_tag_name(docs_tag);
         if readme_tag_name != docs_tag_name {
             let mut notes = vec![
                 text_note(std::format!(
@@ -289,8 +289,8 @@ fn event_diff_notes(
         }
     }
 
-    let readme_text = get_event_text(&readme_event);
-    let docs_text = get_event_text(&docs_event);
+    let readme_text = get_event_text(readme_event);
+    let docs_text = get_event_text(docs_event);
     if let (Some(readme_text), Some(docs_text)) = (readme_text, docs_text) {
         if readme_text != docs_text {
             const OFFSET: usize = 32;
@@ -394,10 +394,10 @@ fn get_event_tag<'a>(event: &'a pulldown_cmark::Event<'_>) -> Option<&'a pulldow
 fn get_event_text<'a>(event: &'a pulldown_cmark::Event<'_>) -> Option<&'a str> {
     use pulldown_cmark::Event;
     match event {
-        Event::Text(text) => Some(&text),
-        Event::Code(text) => Some(&text),
-        Event::Html(text) => Some(&text),
-        Event::FootnoteReference(text) => Some(&text),
+        Event::Text(text) => Some(text),
+        Event::Code(text) => Some(text),
+        Event::Html(text) => Some(text),
+        Event::FootnoteReference(text) => Some(text),
         _ => None,
     }
 }
@@ -465,7 +465,7 @@ impl Display for CMarkDisplay<&pulldown_cmark::Event<'_>> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::Event;
 
-        let event_name = get_event_name(&self.0);
+        let event_name = get_event_name(self.0);
         write!(fmt, "{}", event_name)?;
 
         match &self.0 {
@@ -486,7 +486,7 @@ impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::Tag;
 
-        let tag_name = get_tag_name(&self.0);
+        let tag_name = get_tag_name(self.0);
         write!(fmt, "{}", tag_name)?;
 
         match &self.0 {

@@ -151,7 +151,7 @@ impl Manifest {
     /// Creates manifest from `Cargo.toml` file contents.
     #[cfg(all(feature = "toml", feature = "serde", feature = "thiserror"))]
     pub fn from_cargo_toml_content(content: &str) -> Result<Self, TomlParseError> {
-        Ok(toml::from_str(&content)?)
+        Ok(toml::from_str(content)?)
     }
 
     /// Reads manifest from a specified file path.

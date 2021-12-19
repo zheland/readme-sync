@@ -116,7 +116,7 @@ pub fn build_meta_docs(
                     .peek()
                     .ok_or_else(|| BuildMetaDocsError::CfgAttrWithoutAttribute(meta.clone()))?;
 
-                let predicate_result = eval_cfg_predicate(&predicate, config)?;
+                let predicate_result = eval_cfg_predicate(predicate, config)?;
                 if predicate_result {
                     let doc: Result<Vec<DocsItem>, BuildMetaDocsError> = it
                         .map(|nested_meta| match nested_meta {
@@ -161,7 +161,7 @@ pub fn eval_cfg_predicate(
                 syn::Meta::List(syn::MetaList { nested, .. }) => {
                     if ident == "all" {
                         for nested_meta in nested {
-                            match eval_cfg_predicate(&nested_meta, config) {
+                            match eval_cfg_predicate(nested_meta, config) {
                                 Ok(true) => {}
                                 value => {
                                     return value;
@@ -171,7 +171,7 @@ pub fn eval_cfg_predicate(
                         Ok(true)
                     } else if ident == "any" {
                         for nested_meta in nested {
-                            match eval_cfg_predicate(&nested_meta, config) {
+                            match eval_cfg_predicate(nested_meta, config) {
                                 Ok(false) => {}
                                 value => {
                                     return value;
@@ -182,7 +182,7 @@ pub fn eval_cfg_predicate(
                     } else if ident == "not" {
                         let mut iter = nested.iter();
                         if let (Some(first), None) = (iter.next(), iter.next()) {
-                            Ok(!eval_cfg_predicate(&first, config)?)
+                            Ok(!eval_cfg_predicate(first, config)?)
                         } else {
                             Err(EvalCfgPredicateError::NonSingleNotInput(meta.clone()))
                         }

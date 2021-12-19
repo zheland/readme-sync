@@ -26,7 +26,7 @@ impl<'a> CodemapSpans<'a> {
 
     /// Returns codemap files storage.
     pub fn codemap_files(&self) -> &CodemapFiles {
-        &self.codemap_files
+        self.codemap_files
     }
 
     /// Returns a slice of span labels.

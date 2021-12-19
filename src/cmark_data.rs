@@ -101,7 +101,7 @@ impl CMarkData {
                     result.push(node);
                 }
                 Some(Event::Text(event_text)) => {
-                    text_value += &event_text;
+                    text_value += event_text;
                     text_nodes.push(node);
                 }
                 Some(_) => {
@@ -284,7 +284,7 @@ impl CMarkData {
                 if let Some(Event::Start(Tag::Heading(node_level))) = event {
                     if *node_level <= level {
                         let (mut section, is_removed) =
-                            into_removed_section_if_matched(take(&mut section), &heading, level);
+                            into_removed_section_if_matched(take(&mut section), heading, level);
                         result.append(&mut section);
                         is_already_removed = is_removed;
                     }
@@ -297,7 +297,7 @@ impl CMarkData {
             }
         }
 
-        result.append(&mut into_removed_section_if_matched(take(&mut section), &heading, level).0);
+        result.append(&mut into_removed_section_if_matched(take(&mut section), heading, level).0);
 
         Self(result)
     }
@@ -407,8 +407,8 @@ impl CMarkData {
 
         self.map_links(
             |url| {
-                if !is_absolute_url(&url) && !is_fragment(&url) {
-                    Cow::from([prefix, &url].concat())
+                if !is_absolute_url(url) && !is_fragment(url) {
+                    Cow::from([prefix, url].concat())
                 } else {
                     Cow::from(url)
                 }
@@ -435,7 +435,7 @@ impl CMarkData {
                 if url.as_ref() != new_url.as_ref() {
                     let title = title.clone();
                     return Some(Tag::Link(
-                        ty.clone(),
+                        *ty,
                         CowStr::from(new_url.into_owned()),
                         title.clone(),
                     ));
@@ -505,7 +505,7 @@ fn docs_path_prefix(package_name: &str, documentation_url: &str) -> String {
 
     let url = without_trailing_slash(documentation_url);
     let name = package_name.to_string().replace('-', "_");
-    [&url, "/*/", &name, "/"].concat()
+    [url, "/*/", &name, "/"].concat()
 }
 
 impl CMarkData {
@@ -520,8 +520,8 @@ impl CMarkData {
 
         self.map(|node| {
             let event = match node.event() {
-                Some(Event::Start(tag)) => remove_codeblock_tag_tags(tag, &tags).map(Event::Start),
-                Some(Event::End(tag)) => remove_codeblock_tag_tags(tag, &tags).map(Event::End),
+                Some(Event::Start(tag)) => remove_codeblock_tag_tags(tag, tags).map(Event::Start),
+                Some(Event::End(tag)) => remove_codeblock_tag_tags(tag, tags).map(Event::End),
                 _ => None,
             };
             match event {
@@ -574,10 +574,10 @@ impl CMarkData {
         self.map(|node| {
             let event = match node.event() {
                 Some(Event::Start(node_tag)) => {
-                    map_default_codeblock_tag(node_tag, &tag).map(Event::Start)
+                    map_default_codeblock_tag(node_tag, tag).map(Event::Start)
                 }
                 Some(Event::End(node_tag)) => {
-                    map_default_codeblock_tag(node_tag, &tag).map(Event::End)
+                    map_default_codeblock_tag(node_tag, tag).map(Event::End)
                 }
                 _ => None,
             };

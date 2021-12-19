@@ -102,8 +102,8 @@ impl<'a> CMarkItem {
                 range,
                 text_source,
             } => std::vec![CMarkSpan {
-                range: &range,
-                text_source: &text_source,
+                range,
+                text_source,
                 note: std::format!("{:?}", event),
             }],
             Self::Created { .. } => Vec::new(),
