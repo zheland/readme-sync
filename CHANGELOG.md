@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `CMarkDocs::map_links` function to fix links including intra-doc links.
-- `{CMarkDocs,CMarkReadme}::into_data` and `CMarkData::{into_items,from_items}`.
+- `{CMarkDocs, CMarkReadme}::{into_data, iter_events}`
+- `CMarkData::{into_items, from_items, iter_events}`.
 
 ### Fixed
 - Fix url with scheme check
