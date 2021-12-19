@@ -432,23 +432,23 @@ fn is_fragment(url: &str) -> bool {
 
 #[allow(clippy::match_like_matches_macro)] // requires minimum rustc version 1.42.0
 fn is_url_with_scheme(url: &str) -> bool {
-    if let Some(colon) = url.find(':') {
-        colon > 0
-            && if let b'a'..=b'z' | b'A'..=b'Z' = url.as_bytes()[0] {
-                true
-            } else {
-                false
+    if let Some(scheme) = url.split("//").next() {
+        if scheme.is_empty() {
+            return true;
+        } else if scheme.ends_with(':') && scheme.len() >= 2 {
+            let scheme = &scheme[..scheme.len() - 1];
+            if let b'a'..=b'z' | b'A'..=b'Z' = scheme.as_bytes()[0] {
+                return scheme.as_bytes()[1..].iter().all(|ch| {
+                    if let b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'+' | b'.' | b'-' = ch {
+                        true
+                    } else {
+                        false
+                    }
+                });
             }
-            && url.as_bytes()[1..colon].iter().all(|ch| {
-                if let b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'+' | b'.' | b'-' = ch {
-                    true
-                } else {
-                    false
-                }
-            })
-    } else {
-        false
+        }
     }
+    false
 }
 
 fn without_trailing_slash(value: &str) -> &str {
@@ -627,4 +627,23 @@ pub enum DisallowUrlsWithPrefixError {
         /// Disallowed prefix
         prefix: String,
     },
+}
+
+#[test]
+fn test_is_url_with_scheme() {
+    assert!(!is_url_with_scheme("Foo"));
+    assert!(!is_url_with_scheme("crate::Foo"));
+    assert!(is_url_with_scheme("//Foo"));
+    assert!(!is_url_with_scheme("://Foo"));
+    assert!(is_url_with_scheme("a://Foo"));
+    assert!(is_url_with_scheme("Z://Foo"));
+    assert!(!is_url_with_scheme("0://Foo"));
+    assert!(is_url_with_scheme("aa://Foo"));
+    assert!(is_url_with_scheme("a0://Foo"));
+    assert!(is_url_with_scheme("a+://Foo"));
+    assert!(is_url_with_scheme("a.://Foo"));
+    assert!(is_url_with_scheme("a-://Foo"));
+    assert!(!is_url_with_scheme("a?://Foo"));
+    assert!(is_url_with_scheme("http://Foo"));
+    assert!(is_url_with_scheme("https://Foo"));
 }
