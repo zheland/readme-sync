@@ -5,6 +5,7 @@ use std::borrow::Cow;
 use std::path::Path;
 use std::sync::Arc;
 
+use pulldown_cmark::Event;
 #[cfg(feature = "thiserror")]
 use thiserror::Error;
 
@@ -133,6 +134,11 @@ impl<'a, P, M> CMarkDocs<P, M> {
         &self.data
     }
 
+    /// Consumes the `CMarkDocs`, returning `CMarkData`.
+    pub fn into_data(self) -> CMarkData {
+        self.data
+    }
+
     /// Returns the package path.
     pub fn package_path(&self) -> &P {
         &self.package_path
@@ -146,6 +152,11 @@ impl<'a, P, M> CMarkDocs<P, M> {
     /// Iterate over `CMarkItem`s.
     pub fn iter(&self) -> CMarkDataIter<'_> {
         self.data.iter()
+    }
+
+    /// Iterate over pulldown-cmark events.
+    pub fn iter_events(&self) -> impl Iterator<Item = &Event<'_>> {
+        self.data.iter().filter_map(|item| item.event())
     }
 
     fn map<F>(mut self, func: F) -> CMarkDocs<P, M>

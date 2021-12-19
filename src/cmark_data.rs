@@ -6,6 +6,7 @@ use std::string::String;
 use std::sync::Arc;
 use std::vec::Vec;
 
+use pulldown_cmark::Event;
 #[cfg(feature = "thiserror")]
 use thiserror::Error;
 
@@ -19,6 +20,11 @@ pub struct CMarkData(Vec<Arc<CMarkItem>>);
 pub type CMarkDataIter<'a> = Iter<'a, Arc<CMarkItem>>;
 
 impl CMarkData {
+    /// Creates `CMarkData` from `CMarkItem`s.
+    pub fn from_items(items: Vec<Arc<CMarkItem>>) -> Self {
+        Self(items)
+    }
+
     /// Creates `CMarkData` from the specified `File`.
     pub fn from_file(file: Arc<File>) -> Self {
         Self::from_text_source(TextSource::File(file))
@@ -50,9 +56,19 @@ impl CMarkData {
         .concat_texts()
     }
 
+    /// Consumes the `CMarkData`, returning `CMarkItem`s.
+    pub fn into_items(self) -> Vec<Arc<CMarkItem>> {
+        self.0
+    }
+
     /// Iterate over `CMarkItem`s.
     pub fn iter(&self) -> CMarkDataIter<'_> {
         self.0.iter()
+    }
+
+    /// Iterate over pulldown-cmark events.
+    pub fn iter_events(&self) -> impl Iterator<Item = &Event<'_>> {
+        self.0.iter().filter_map(|item| item.event())
     }
 
     fn map<F>(self, func: F) -> Self
@@ -74,7 +90,6 @@ impl CMarkData {
     /// seperate text events for character entity reference.
     pub fn concat_texts(self) -> Self {
         use core::mem::take;
-        use pulldown_cmark::Event;
 
         let mut result = Vec::new();
         let mut text_nodes = Vec::new();
@@ -106,7 +121,7 @@ impl CMarkData {
 
 fn merge_text_nodes(nodes: Vec<Arc<CMarkItem>>, text: String) -> Option<Arc<CMarkItem>> {
     use crate::CMarkItemAsModified;
-    use pulldown_cmark::{CowStr, Event};
+    use pulldown_cmark::CowStr;
 
     match nodes.len() {
         0 => None,
@@ -128,7 +143,7 @@ impl CMarkData {
     /// So it is necessary to increase the level of all headings in the documentation in order to synchronize the headings.
     pub fn increment_heading_levels(self) -> Self {
         use crate::CMarkItemAsModified;
-        use pulldown_cmark::{Event, Tag};
+        use pulldown_cmark::Tag;
 
         self.map(|node| {
             let event = match node.event() {
@@ -150,7 +165,7 @@ impl CMarkData {
     ///
     /// This function could be useful after heading level incremented.
     pub fn add_title(self, text: &str) -> Self {
-        use pulldown_cmark::{CowStr, Event, Tag};
+        use pulldown_cmark::{CowStr, Tag};
         use std::string::ToString;
 
         let heading = std::vec![
@@ -174,7 +189,7 @@ impl CMarkData {
     {
         use crate::CMarkItemAsRemoved;
         use core::mem::take;
-        use pulldown_cmark::{Event, Tag};
+        use pulldown_cmark::Tag;
         use std::string::ToString;
 
         let mut result = Vec::new();
@@ -257,7 +272,7 @@ impl CMarkData {
     /// Remove section with the specified heading text and level and its subsections.
     pub fn remove_section(self, heading: &str, level: u32) -> Self {
         use core::mem::take;
-        use pulldown_cmark::{Event, Tag};
+        use pulldown_cmark::Tag;
 
         let mut section = Vec::new();
         let mut result = Vec::new();
@@ -316,7 +331,7 @@ fn into_removed_section_if_matched(
 }
 
 fn is_matched_section(section: &[Arc<CMarkItem>], heading: &str, level: u32) -> bool {
-    use pulldown_cmark::{Event, Tag};
+    use pulldown_cmark::Tag;
 
     let first_event = section.get(0).and_then(|node| node.event());
     let second_event = section.get(1).and_then(|node| node.event());
@@ -357,7 +372,7 @@ impl CMarkData {
         self,
         prefix: &str,
     ) -> Result<Self, DisallowUrlsWithPrefixError> {
-        use pulldown_cmark::{Event, Tag};
+        use pulldown_cmark::Tag;
         use std::string::ToString;
 
         for node in &self.0 {
@@ -408,7 +423,7 @@ impl CMarkData {
         for<'b> F: FnMut(&'b str) -> Cow<'b, str>,
     {
         use crate::CMarkItemAsModified;
-        use pulldown_cmark::{CowStr, Event, Tag};
+        use pulldown_cmark::{CowStr, Tag};
 
         fn map_link<'a, F>(tag: &Tag<'a>, mut func: F) -> Option<Tag<'a>>
         where
@@ -502,7 +517,6 @@ impl CMarkData {
     /// Remove the specified fenced code block tags.
     pub fn remove_codeblock_tags(self, tags: &[&str]) -> Self {
         use crate::CMarkItemAsModified;
-        use pulldown_cmark::Event;
 
         self.map(|node| {
             let event = match node.event() {
@@ -556,7 +570,6 @@ impl CMarkData {
     /// Use the specified codeblock tag, if they are not specified
     pub fn use_default_codeblock_tag(self, tag: &str) -> Self {
         use crate::CMarkItemAsModified;
-        use pulldown_cmark::Event;
 
         self.map(|node| {
             let event = match node.event() {
@@ -607,7 +620,7 @@ impl CMarkData {
     /// See <https://doc.rust-lang.org/rustdoc/documentation-tests.html#hiding-portions-of-the-example> for more details.
     pub fn remove_hidden_rust_code(self) -> Self {
         use crate::CMarkItemAsModified;
-        use pulldown_cmark::{CodeBlockKind, CowStr, Event, Tag};
+        use pulldown_cmark::{CodeBlockKind, CowStr, Tag};
 
         let mut is_rust_codeblock = false;
 
