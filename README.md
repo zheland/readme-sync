@@ -4,7 +4,7 @@
 [![Latest Version](https://img.shields.io/crates/v/readme-sync.svg)](https://crates.io/crates/readme-sync)
 [![Documentation](https://docs.rs/readme-sync/badge.svg)](https://docs.rs/readme-sync)
 [![GitHub license](https://img.shields.io/crates/l/readme-sync)](https://github.com/zheland/readme-sync/#license)
-[![Rust Version](https://img.shields.io/badge/rustc-1.40+-lightgray.svg)](https://blog.rust-lang.org/2020/01/30/Rust-1.40.0.html)
+[![Rust Version](https://img.shields.io/badge/rustc-1.46+-lightgray.svg)](https://blog.rust-lang.org/2020/08/27/Rust-1.46.0.html)
 
 The `readme-sync` crate makes it easy to add an integration test
 that checks that your readme and crate documentation are synchronized.

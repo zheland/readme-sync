@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `{CMarkDocs, CMarkReadme}::{into_data, iter_events}`
 - `CMarkData::{into_items, from_items, iter_events}`.
 
+### Changed
+- Minimum supported rustc version is increased from 1.40.0 to 1.46.0.
+
 ### Fixed
 - Fix url with scheme check
 
