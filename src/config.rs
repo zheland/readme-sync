@@ -54,11 +54,7 @@ impl<'a> Config<'a> {
             ));
             let _ = self.name_values.insert((
                 Cow::from("target_env"),
-                Cow::from(
-                    platform
-                        .target_env
-                        .map_or("", |target_env| target_env.as_str()),
-                ),
+                Cow::from(platform.target_env.as_str()),
             ));
         }
         self

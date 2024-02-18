@@ -83,7 +83,7 @@ pub fn build_attr_docs(
     attr: &syn::Attribute,
     config: &Config<'_>,
 ) -> Result<impl Iterator<Item = DocsItem>, BuildAttrDocsError> {
-    Ok(build_meta_docs(&attr.parse_meta()?, config)?)
+    Ok(build_meta_docs(&attr.meta, config)?)
 }
 
 /// Builds documentation from the specified compile-time structured attribute.
@@ -96,8 +96,11 @@ pub fn build_meta_docs(
 
     if meta.path().is_ident("doc") {
         match meta {
-            syn::Meta::NameValue(syn::MetaNameValue { lit, .. }) => match lit {
-                syn::Lit::Str(lit_str) => {
+            syn::Meta::NameValue(syn::MetaNameValue { value, .. }) => match value {
+                syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Str(lit_str),
+                    attrs,
+                }) if attrs.is_empty() => {
                     Ok(std::vec![DocsItem::from(lit_str), DocsItem::from("\n")].into_iter())
                 }
                 _ => Err(BuildMetaDocsError::NonStringDocInput(meta.clone())),
@@ -106,8 +109,12 @@ pub fn build_meta_docs(
         }
     } else if meta.path().is_ident("cfg_attr") {
         match meta {
-            syn::Meta::List(syn::MetaList { nested, .. }) => {
-                let mut it = nested.iter();
+            syn::Meta::List(meta_list) => {
+                let mut it = meta_list
+                    .parse_args::<PunctuatedMetaArgs>()
+                    .map_err(|_| BuildMetaDocsError::CfgNonMetaAttribute(meta_list.clone()))?
+                    .0
+                    .into_iter();
                 let predicate = it
                     .next()
                     .ok_or_else(|| BuildMetaDocsError::CfgAttrWithoutPredicate(meta.clone()))?;
@@ -116,15 +123,10 @@ pub fn build_meta_docs(
                     .peek()
                     .ok_or_else(|| BuildMetaDocsError::CfgAttrWithoutAttribute(meta.clone()))?;
 
-                let predicate_result = eval_cfg_predicate(predicate, config)?;
+                let predicate_result = eval_cfg_predicate(&predicate, config)?;
                 if predicate_result {
                     let doc: Result<Vec<DocsItem>, BuildMetaDocsError> = it
-                        .map(|nested_meta| match nested_meta {
-                            syn::NestedMeta::Meta(meta) => build_meta_docs(meta, config),
-                            syn::NestedMeta::Lit(_) => {
-                                Err(BuildMetaDocsError::CfgAttrLiteralAttribute(meta.clone()))
-                            }
-                        })
+                        .map(|nested_meta| build_meta_docs(&nested_meta, config))
                         .try_fold(Vec::new(), |mut acc, doc| {
                             acc.extend(doc?);
                             Ok(acc)
@@ -145,61 +147,76 @@ pub fn build_meta_docs(
 /// Evaluates configuration predicate.
 #[cfg(all(feature = "syn", feature = "thiserror"))]
 pub fn eval_cfg_predicate(
-    predicate: &syn::NestedMeta,
+    meta: &syn::Meta,
     config: &Config<'_>,
 ) -> Result<bool, EvalCfgPredicateError> {
     use std::string::ToString;
 
-    match predicate {
-        syn::NestedMeta::Meta(meta) => {
-            let ident = meta
-                .path()
-                .get_ident()
-                .ok_or_else(|| EvalCfgPredicateError::NonIdentPath(meta.clone()))?;
-            match meta {
-                syn::Meta::Path(_) => Ok(config.idents.contains(ident.to_string().as_str())),
-                syn::Meta::List(syn::MetaList { nested, .. }) => {
-                    if ident == "all" {
-                        for nested_meta in nested {
-                            match eval_cfg_predicate(nested_meta, config) {
-                                Ok(true) => {}
-                                value => {
-                                    return value;
-                                }
-                            }
+    let ident = meta
+        .path()
+        .get_ident()
+        .ok_or_else(|| EvalCfgPredicateError::NonIdentPath(meta.clone()))?;
+    match meta {
+        syn::Meta::Path(_) => Ok(config.idents.contains(ident.to_string().as_str())),
+        syn::Meta::List(meta_list) => {
+            let it = meta_list
+                .parse_args::<PunctuatedMetaArgs>()
+                .map_err(|_| EvalCfgPredicateError::CfgNonMetaAttribute(meta_list.clone()))?
+                .0
+                .into_iter();
+
+            if ident == "all" {
+                for nested_meta in it {
+                    match eval_cfg_predicate(&nested_meta, config) {
+                        Ok(true) => {}
+                        value => {
+                            return value;
                         }
-                        Ok(true)
-                    } else if ident == "any" {
-                        for nested_meta in nested {
-                            match eval_cfg_predicate(nested_meta, config) {
-                                Ok(false) => {}
-                                value => {
-                                    return value;
-                                }
-                            }
-                        }
-                        Ok(false)
-                    } else if ident == "not" {
-                        let mut iter = nested.iter();
-                        if let (Some(first), None) = (iter.next(), iter.next()) {
-                            Ok(!eval_cfg_predicate(first, config)?)
-                        } else {
-                            Err(EvalCfgPredicateError::NonSingleNotInput(meta.clone()))
-                        }
-                    } else {
-                        Err(EvalCfgPredicateError::InvalidPredicateFn(meta.clone()))
                     }
                 }
-                syn::Meta::NameValue(syn::MetaNameValue { lit, .. }) => match lit {
-                    syn::Lit::Str(lit_str) => Ok(config.name_values.contains(&(
-                        Cow::from(ident.to_string().as_str()),
-                        Cow::from(lit_str.value()),
-                    ))),
-                    _ => Err(EvalCfgPredicateError::NonStringOptionValue(meta.clone())),
-                },
+                Ok(true)
+            } else if ident == "any" {
+                for nested_meta in it {
+                    match eval_cfg_predicate(&nested_meta, config) {
+                        Ok(false) => {}
+                        value => {
+                            return value;
+                        }
+                    }
+                }
+                Ok(false)
+            } else if ident == "not" {
+                let mut iter = it;
+                if let (Some(first), None) = (iter.next(), iter.next()) {
+                    Ok(!eval_cfg_predicate(&first, config)?)
+                } else {
+                    Err(EvalCfgPredicateError::NonSingleNotInput(meta.clone()))
+                }
+            } else {
+                Err(EvalCfgPredicateError::InvalidPredicateFn(meta.clone()))
             }
         }
-        syn::NestedMeta::Lit(_) => Err(EvalCfgPredicateError::LiteralPredicate(predicate.clone())),
+        syn::Meta::NameValue(syn::MetaNameValue { value, .. }) => match value {
+            syn::Expr::Lit(syn::ExprLit {
+                lit: syn::Lit::Str(lit_str),
+                attrs,
+            }) if attrs.is_empty() => Ok(config.name_values.contains(&(
+                Cow::from(ident.to_string().as_str()),
+                Cow::from(lit_str.value()),
+            ))),
+            _ => Err(EvalCfgPredicateError::NonStringOptionValue(meta.clone())),
+        },
+    }
+}
+
+struct PunctuatedMetaArgs(syn::punctuated::Punctuated<syn::Meta, syn::Token![,]>);
+
+impl syn::parse::Parse for PunctuatedMetaArgs {
+    fn parse(input: syn::parse::ParseStream<'_>) -> syn::Result<Self> {
+        Ok(Self(syn::punctuated::Punctuated::<
+            syn::Meta,
+            syn::Token![,],
+        >::parse_terminated(input)?))
     }
 }
 
@@ -231,9 +248,9 @@ pub enum BuildMetaDocsError {
     /// `cfg_attr` has no attributes.
     #[error("`cfg_attr` should contain at least one attribute: `{0:?}`.")]
     CfgAttrWithoutAttribute(syn::Meta),
-    /// `cfg_attr` literal attribute.
-    #[error("`cfg_attr` attribute should not be literal: `{0:?}`.")]
-    CfgAttrLiteralAttribute(syn::Meta),
+    /// `cfg_attr` non-meta attribute.
+    #[error("`cfg_attr` attribute should be a meta attribute: `{0:?}`.")]
+    CfgNonMetaAttribute(syn::MetaList),
     /// Predicate evaluation error.
     #[error(transparent)]
     PredicateError(#[from] EvalCfgPredicateError),
@@ -255,7 +272,7 @@ pub enum EvalCfgPredicateError {
     /// Non-string option value.
     #[error("Predicatge option values can only be a string or raw string literal: `{0:?}`.")]
     NonStringOptionValue(syn::Meta),
-    /// Literal predicate.
-    #[error("Predicate can not be a literal: `{0:?}`.")]
-    LiteralPredicate(syn::NestedMeta),
+    /// Non-meta attribute.
+    #[error("Predicate should be a meta attribute: `{0:?}`.")]
+    CfgNonMetaAttribute(syn::MetaList),
 }

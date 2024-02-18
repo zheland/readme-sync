@@ -19,7 +19,7 @@ impl File {
     pub fn from_path(path: PathBuf, root: Option<&Path>) -> Result<Self, FileFromPathError> {
         use std::fs;
         let content = match root {
-            Some(root) => fs::read_to_string(&root.join(&path)),
+            Some(root) => fs::read_to_string(root.join(&path)),
             None => fs::read_to_string(&path),
         };
         match content {

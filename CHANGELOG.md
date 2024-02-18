@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Update `syn`, `pulldown-cmark`, and `platforms` dependencies.
+- Improve support for ongoing Rust language changes.
+- Minimum supported rustc version is increased from 1.70.0.
 
 ## [0.2.1] - 2021-12-19
 ### Added

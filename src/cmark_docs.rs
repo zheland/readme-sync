@@ -59,7 +59,7 @@ impl<'a> CMarkDocs<&'a Path, &'a Manifest> {
 }
 
 #[cfg(all(feature = "syn", feature = "thiserror"))]
-impl<'a> CMarkDocs<(), ()> {
+impl CMarkDocs<(), ()> {
     /// Creates docs from file and the specified config.
     ///
     /// The method parses a file with the specified configuration.

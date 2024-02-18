@@ -303,8 +303,8 @@ impl Manifest {
             all_features.extend(
                 dependencies
                     .iter()
-                    .filter_map(|(name, dep)| match dep.optional {
-                        Some(true) => Some(name.deref()),
+                    .filter_map(|(key, dep)| match dep.optional {
+                        Some(true) => Some(key.deref()),
                         _ => None,
                     }),
             );

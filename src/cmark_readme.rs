@@ -40,7 +40,7 @@ impl<'a> CMarkReadme<&'a Path, &'a Manifest> {
     }
 }
 
-impl<'a> CMarkReadme<(), ()> {
+impl CMarkReadme<(), ()> {
     /// Creates readme from file.
     pub fn from_file(file: Arc<File>) -> Self {
         Self::from_file_and_package_path_and_manifest(file, (), ())

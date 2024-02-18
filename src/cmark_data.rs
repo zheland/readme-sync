@@ -143,14 +143,24 @@ impl CMarkData {
     /// So it is necessary to increase the level of all headings in the documentation in order to synchronize the headings.
     pub fn increment_heading_levels(self) -> Self {
         use crate::CMarkItemAsModified;
-        use pulldown_cmark::Tag;
+        use pulldown_cmark::{Tag, TagEnd};
 
         self.map(|node| {
             let event = match node.event() {
-                Some(Event::Start(Tag::Heading(level))) => {
-                    Some(Event::Start(Tag::Heading(level + 1)))
+                Some(Event::Start(Tag::Heading {
+                    level,
+                    id,
+                    classes,
+                    attrs,
+                })) => Some(Event::Start(Tag::Heading {
+                    level: increase_heading_level(*level),
+                    id: id.clone(),
+                    classes: classes.clone(),
+                    attrs: attrs.clone(),
+                })),
+                Some(Event::End(TagEnd::Heading(level))) => {
+                    Some(Event::End(TagEnd::Heading(increase_heading_level(*level))))
                 }
-                Some(Event::End(Tag::Heading(level))) => Some(Event::End(Tag::Heading(level + 1))),
                 _ => None,
             };
             if let Some(event) = event {
@@ -165,19 +175,30 @@ impl CMarkData {
     ///
     /// This function could be useful after heading level incremented.
     pub fn add_title(self, text: &str) -> Self {
-        use pulldown_cmark::{CowStr, Tag};
+        use pulldown_cmark::{CowStr, HeadingLevel, Tag, TagEnd};
         use std::string::ToString;
 
         let heading = std::vec![
-            CMarkItem::new(Event::Start(Tag::Heading(1)), Cow::from("add_title()")),
+            CMarkItem::new(
+                Event::Start(Tag::Heading {
+                    level: HeadingLevel::H1,
+                    id: None,
+                    classes: std::vec![],
+                    attrs: std::vec![]
+                }),
+                Cow::from("add_title()")
+            ),
             CMarkItem::new(
                 Event::Text(CowStr::Boxed(text.to_string().into_boxed_str())),
                 Cow::from("add_title()")
             ),
-            CMarkItem::new(Event::End(Tag::Heading(1)), Cow::from("add_title()")),
+            CMarkItem::new(
+                Event::End(TagEnd::Heading(HeadingLevel::H1)),
+                Cow::from("add_title()")
+            ),
         ];
 
-        Self(heading.into_iter().chain(self.0.into_iter()).collect())
+        Self(heading.into_iter().chain(self.0).collect())
     }
 
     /// Removes first paragraph that contains only images and image-links,
@@ -189,7 +210,7 @@ impl CMarkData {
     {
         use crate::CMarkItemAsRemoved;
         use core::mem::take;
-        use pulldown_cmark::Tag;
+        use pulldown_cmark::{Tag, TagEnd};
         use std::string::ToString;
 
         let mut result = Vec::new();
@@ -207,7 +228,7 @@ impl CMarkData {
             if !paragraph.is_empty() {
                 if is_image {
                     let event = node.event();
-                    is_image = if let Some(Event::End(Tag::Image(..))) = event {
+                    is_image = if let Some(Event::End(TagEnd::Image { .. })) = event {
                         false
                     } else {
                         true
@@ -218,7 +239,7 @@ impl CMarkData {
                     let node = paragraph.last().unwrap();
                     let event = node.event();
                     match event {
-                        Some(Event::End(Tag::Paragraph)) => {
+                        Some(Event::End(TagEnd::Paragraph)) => {
                             let urls: Vec<String> = take(&mut image_urls);
                             let urls: Vec<&str> = urls.iter().map(|url| url.as_str()).collect();
                             if !urls.is_empty() && predicate(&urls) {
@@ -231,12 +252,12 @@ impl CMarkData {
                                 result.append(&mut paragraph);
                             }
                         }
-                        Some(Event::Start(Tag::Image(_, url, _))) => {
-                            image_urls.push(url.as_ref().to_string());
+                        Some(Event::Start(Tag::Image { dest_url, .. })) => {
+                            image_urls.push(dest_url.as_ref().to_string());
                             is_image = true;
                         }
-                        Some(Event::Start(Tag::Link(..)))
-                        | Some(Event::End(Tag::Link(..)))
+                        Some(Event::Start(Tag::Link { .. }))
+                        | Some(Event::End(TagEnd::Link { .. }))
                         | Some(Event::SoftBreak)
                         | None => {}
                         Some(_) => {
@@ -281,8 +302,11 @@ impl CMarkData {
         for node in self.0.into_iter() {
             if !is_already_removed {
                 let event = node.event();
-                if let Some(Event::Start(Tag::Heading(node_level))) = event {
-                    if *node_level <= level {
+                if let Some(Event::Start(Tag::Heading {
+                    level: node_level, ..
+                })) = event
+                {
+                    if heading_level(*node_level) <= level {
                         let (mut section, is_removed) =
                             into_removed_section_if_matched(take(&mut section), heading, level);
                         result.append(&mut section);
@@ -333,12 +357,16 @@ fn into_removed_section_if_matched(
 fn is_matched_section(section: &[Arc<CMarkItem>], heading: &str, level: u32) -> bool {
     use pulldown_cmark::Tag;
 
-    let first_event = section.get(0).and_then(|node| node.event());
+    let first_event = section.first().and_then(|node| node.event());
     let second_event = section.get(1).and_then(|node| node.event());
-    if let (Some(Event::Start(Tag::Heading(node_level))), Some(Event::Text(node_text))) =
-        (first_event, second_event)
+    if let (
+        Some(Event::Start(Tag::Heading {
+            level: node_level, ..
+        })),
+        Some(Event::Text(node_text)),
+    ) = (first_event, second_event)
     {
-        *node_level == level && node_text.as_ref() == heading
+        heading_level(*node_level) == level && node_text.as_ref() == heading
     } else {
         false
     }
@@ -376,10 +404,10 @@ impl CMarkData {
         use std::string::ToString;
 
         for node in &self.0 {
-            if let Some(Event::Start(Tag::Link(_, url, _))) = node.event() {
-                if url.starts_with(&*prefix) {
+            if let Some(Event::Start(Tag::Link { dest_url, .. })) = node.event() {
+                if dest_url.starts_with(prefix) {
                     return Err(DisallowUrlsWithPrefixError::PrefixFound {
-                        url: url.as_ref().to_string(),
+                        url: dest_url.as_ref().to_string(),
                         prefix: prefix.to_string(),
                     });
                 }
@@ -429,16 +457,23 @@ impl CMarkData {
         where
             for<'b> F: FnMut(&'b str) -> Cow<'b, str>,
         {
-            if let Tag::Link(ty, url, title) = tag {
-                let new_url = func(url.as_ref());
-                std::println!("from: {}\nto: {}", url.as_ref(), new_url.as_ref());
-                if url.as_ref() != new_url.as_ref() {
+            if let Tag::Link {
+                link_type,
+                dest_url,
+                title,
+                id,
+            } = tag
+            {
+                let new_url = func(dest_url.as_ref());
+                std::println!("from: {}\nto: {}", dest_url.as_ref(), new_url.as_ref());
+                if dest_url.as_ref() != new_url.as_ref() {
                     let title = title.clone();
-                    return Some(Tag::Link(
-                        *ty,
-                        CowStr::from(new_url.into_owned()),
-                        title.clone(),
-                    ));
+                    return Some(Tag::Link {
+                        link_type: *link_type,
+                        dest_url: CowStr::from(new_url.into_owned()),
+                        title: title.clone(),
+                        id: id.clone(),
+                    });
                 }
             }
             None
@@ -448,7 +483,6 @@ impl CMarkData {
         self.map(|node| {
             let event = match node.event() {
                 Some(Event::Start(tag)) => map_link(tag, &mut func).map(Event::Start),
-                Some(Event::End(tag)) => map_link(tag, &mut func).map(Event::End),
                 _ => None,
             };
             match event {
@@ -521,7 +555,6 @@ impl CMarkData {
         self.map(|node| {
             let event = match node.event() {
                 Some(Event::Start(tag)) => remove_codeblock_tag_tags(tag, tags).map(Event::Start),
-                Some(Event::End(tag)) => remove_codeblock_tag_tags(tag, tags).map(Event::End),
                 _ => None,
             };
             match event {
@@ -576,9 +609,6 @@ impl CMarkData {
                 Some(Event::Start(node_tag)) => {
                     map_default_codeblock_tag(node_tag, tag).map(Event::Start)
                 }
-                Some(Event::End(node_tag)) => {
-                    map_default_codeblock_tag(node_tag, tag).map(Event::End)
-                }
                 _ => None,
             };
             match event {
@@ -629,9 +659,6 @@ impl CMarkData {
                 Some(Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(tags)))) => {
                     is_rust_codeblock |= tags.split(',').any(|tag| tag == "rust")
                 }
-                Some(Event::End(Tag::CodeBlock(..))) => {
-                    is_rust_codeblock = false;
-                }
                 Some(Event::Text(text)) => {
                     if is_rust_codeblock {
                         let text: Vec<_> = text
@@ -662,6 +689,31 @@ pub enum DisallowUrlsWithPrefixError {
         /// Disallowed prefix
         prefix: String,
     },
+}
+
+fn increase_heading_level(level: pulldown_cmark::HeadingLevel) -> pulldown_cmark::HeadingLevel {
+    use pulldown_cmark::HeadingLevel;
+
+    match level {
+        HeadingLevel::H1 => HeadingLevel::H2,
+        HeadingLevel::H2 => HeadingLevel::H3,
+        HeadingLevel::H3 => HeadingLevel::H4,
+        HeadingLevel::H4 => HeadingLevel::H5,
+        HeadingLevel::H5 | HeadingLevel::H6 => HeadingLevel::H6,
+    }
+}
+
+fn heading_level(level: pulldown_cmark::HeadingLevel) -> u32 {
+    use pulldown_cmark::HeadingLevel;
+
+    match level {
+        HeadingLevel::H1 => 1,
+        HeadingLevel::H2 => 2,
+        HeadingLevel::H3 => 3,
+        HeadingLevel::H4 => 4,
+        HeadingLevel::H5 => 5,
+        HeadingLevel::H6 => 6,
+    }
 }
 
 #[test]

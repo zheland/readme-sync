@@ -9,6 +9,7 @@ use core::fmt::Display;
 use std::path::Path;
 use std::string::String;
 
+use pulldown_cmark::CowStr;
 use thiserror::Error;
 
 use crate::{CMarkDocs, CMarkReadme};
@@ -65,13 +66,17 @@ pub fn check_sync<P1, P2, M1, M2>(
                 &docs_node,
             )];
 
-            diags.extend(
-                removed_nodes_note(&mut codemap_files, &readme_removed_nodes, "readme").into_iter(),
-            );
+            diags.extend(removed_nodes_note(
+                &mut codemap_files,
+                &readme_removed_nodes,
+                "readme",
+            ));
 
-            diags.extend(
-                removed_nodes_note(&mut codemap_files, &docs_removed_nodes, "docs").into_iter(),
-            );
+            diags.extend(removed_nodes_note(
+                &mut codemap_files,
+                &docs_removed_nodes,
+                "docs",
+            ));
 
             if let (Some(readme_event), Some(docs_event)) = (readme_event, docs_event) {
                 diags.append(&mut event_diff_notes(&readme_event, &docs_event));
@@ -256,19 +261,19 @@ fn event_diff_notes(
         ];
     }
 
-    let readme_tag = get_event_tag(readme_event);
-    let docs_tag = get_event_tag(docs_event);
+    let readme_tag = get_event_start_tag(readme_event);
+    let docs_tag = get_event_start_tag(docs_event);
     if let (Some(readme_tag), Some(docs_tag)) = (readme_tag, docs_tag) {
-        let readme_tag_name = get_tag_name(readme_tag);
-        let docs_tag_name = get_tag_name(docs_tag);
+        let readme_tag_name = get_start_tag_name(readme_tag);
+        let docs_tag_name = get_start_tag_name(docs_tag);
         if readme_tag_name != docs_tag_name {
             let mut notes = vec![
                 text_note(std::format!(
-                    "readme node event tag name is \"{}\"",
+                    "readme node event start tag name is \"{}\"",
                     readme_tag_name
                 )),
                 text_note(std::format!(
-                    "docs   node event tag name is \"{}\"",
+                    "docs   node event start tag name is \"{}\"",
                     docs_tag_name
                 )),
             ];
@@ -285,6 +290,26 @@ fn event_diff_notes(
                     .to_string(),
                 ));
             }
+            return notes;
+        }
+    }
+
+    let readme_tag = get_event_end_tag(readme_event);
+    let docs_tag = get_event_end_tag(docs_event);
+    if let (Some(readme_tag), Some(docs_tag)) = (readme_tag, docs_tag) {
+        let readme_tag_name = get_end_tag_name(readme_tag);
+        let docs_tag_name = get_end_tag_name(docs_tag);
+        if readme_tag_name != docs_tag_name {
+            let notes = vec![
+                text_note(std::format!(
+                    "readme node event end tag name is \"{}\"",
+                    readme_tag_name
+                )),
+                text_note(std::format!(
+                    "docs   node event end tag name is \"{}\"",
+                    docs_tag_name
+                )),
+            ];
             return notes;
         }
     }
@@ -382,10 +407,21 @@ fn formatted_subslice(text: &str, start: usize, end: usize) -> String {
     )
 }
 
-fn get_event_tag<'a>(event: &'a pulldown_cmark::Event<'_>) -> Option<&'a pulldown_cmark::Tag<'a>> {
+fn get_event_start_tag<'a>(
+    event: &'a pulldown_cmark::Event<'_>,
+) -> Option<&'a pulldown_cmark::Tag<'a>> {
     use pulldown_cmark::Event;
     match event {
         Event::Start(tag) => Some(tag),
+        _ => None,
+    }
+}
+
+fn get_event_end_tag<'a>(
+    event: &'a pulldown_cmark::Event<'_>,
+) -> Option<&'a pulldown_cmark::TagEnd> {
+    use pulldown_cmark::Event;
+    match event {
         Event::End(tag) => Some(tag),
         _ => None,
     }
@@ -410,6 +446,7 @@ fn get_event_name<'a>(event: &pulldown_cmark::Event<'_>) -> &'a str {
         Event::Text(..) => "Text",
         Event::Code(..) => "Code",
         Event::Html(..) => "Html",
+        Event::InlineHtml(..) => "InlineHtml",
         Event::FootnoteReference(..) => "FootnoteReference",
         Event::SoftBreak => "SoftBreak",
         Event::HardBreak => "HardBreak",
@@ -418,13 +455,14 @@ fn get_event_name<'a>(event: &pulldown_cmark::Event<'_>) -> &'a str {
     }
 }
 
-fn get_tag_name<'a>(tag: &'a pulldown_cmark::Tag<'_>) -> &'a str {
+fn get_start_tag_name<'a>(tag: &'a pulldown_cmark::Tag<'_>) -> &'a str {
     use pulldown_cmark::Tag;
     match tag {
         Tag::Paragraph => "Paragraph",
-        Tag::Heading(..) => "Heading",
+        Tag::Heading { .. } => "Heading",
         Tag::BlockQuote => "BlockQuote",
         Tag::CodeBlock(..) => "CodeBlock",
+        Tag::HtmlBlock { .. } => "HtmlBlock",
         Tag::List(..) => "List",
         Tag::Item => "Item",
         Tag::FootnoteDefinition(..) => "FootnoteDefinition",
@@ -435,8 +473,33 @@ fn get_tag_name<'a>(tag: &'a pulldown_cmark::Tag<'_>) -> &'a str {
         Tag::Emphasis => "Emphasis",
         Tag::Strong => "Strong",
         Tag::Strikethrough => "Strikethrough",
-        Tag::Link(..) => "Link",
-        Tag::Image(..) => "Image",
+        Tag::Link { .. } => "Link",
+        Tag::Image { .. } => "Image",
+        Tag::MetadataBlock(..) => "MetadataBlock",
+    }
+}
+
+fn get_end_tag_name(tag: &pulldown_cmark::TagEnd) -> &str {
+    use pulldown_cmark::TagEnd;
+    match tag {
+        TagEnd::Paragraph => "Paragraph",
+        TagEnd::Heading { .. } => "Heading",
+        TagEnd::BlockQuote => "BlockQuote",
+        TagEnd::CodeBlock => "CodeBlock",
+        TagEnd::HtmlBlock { .. } => "HtmlBlock",
+        TagEnd::List(..) => "List",
+        TagEnd::Item => "Item",
+        TagEnd::FootnoteDefinition => "FootnoteDefinition",
+        TagEnd::Table => "Table",
+        TagEnd::TableHead => "TableHead",
+        TagEnd::TableRow => "TableRow",
+        TagEnd::TableCell => "TableCell",
+        TagEnd::Emphasis => "Emphasis",
+        TagEnd::Strong => "Strong",
+        TagEnd::Strikethrough => "Strikethrough",
+        TagEnd::Link { .. } => "Link",
+        TagEnd::Image { .. } => "Image",
+        TagEnd::MetadataBlock(..) => "MetadataBlock",
     }
 }
 
@@ -469,10 +532,12 @@ impl Display for CMarkDisplay<&pulldown_cmark::Event<'_>> {
         write!(fmt, "{}", event_name)?;
 
         match &self.0 {
-            Event::Start(tag) | Event::End(tag) => write!(fmt, "({})", CMarkDisplay(tag)),
+            Event::Start(tag) => write!(fmt, "({})", CMarkDisplay(tag)),
+            Event::End(tag) => write!(fmt, "({})", CMarkDisplay(tag)),
             Event::Text(text)
             | Event::Code(text)
             | Event::Html(text)
+            | Event::InlineHtml(text)
             | Event::FootnoteReference(text) => write!(fmt, "(\"{}\")", &text),
             Event::SoftBreak => Ok(()),
             Event::HardBreak => Ok(()),
@@ -484,16 +549,29 @@ impl Display for CMarkDisplay<&pulldown_cmark::Event<'_>> {
 
 impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        use pulldown_cmark::Tag;
+        use pulldown_cmark::{MetadataBlockKind, Tag};
 
-        let tag_name = get_tag_name(self.0);
+        let tag_name = get_start_tag_name(self.0);
         write!(fmt, "{}", tag_name)?;
 
         match &self.0 {
             Tag::Paragraph => Ok(()),
-            Tag::Heading(level) => write!(fmt, "({})", level),
+            Tag::Heading {
+                level,
+                id,
+                classes,
+                attrs,
+            } => write!(
+                fmt,
+                "({}, \"{}\", {}, {})",
+                level,
+                CMarkDisplay(id.as_deref()),
+                CMarkDisplay(classes.as_slice()),
+                CMarkDisplay(attrs.as_slice())
+            ),
             Tag::BlockQuote => Ok(()),
             Tag::CodeBlock(kind) => write!(fmt, "({})", CMarkDisplay(kind)),
+            Tag::HtmlBlock => Ok(()),
             Tag::List(Some(first)) => write!(fmt, "(Some({}))", first),
             Tag::List(None) => write!(fmt, "(None)"),
             Tag::Item => Ok(()),
@@ -505,13 +583,112 @@ impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
             Tag::Emphasis => Ok(()),
             Tag::Strong => Ok(()),
             Tag::Strikethrough => Ok(()),
-            Tag::Link(ty, url, title) => {
-                write!(fmt, "({}, \"{}\", \"{}\")", CMarkDisplay(ty), url, title)
+            Tag::Link {
+                link_type,
+                dest_url,
+                title,
+                id,
+            } => {
+                write!(
+                    fmt,
+                    "({}, \"{}\", \"{}\", \"{}\")",
+                    CMarkDisplay(link_type),
+                    dest_url,
+                    title,
+                    id
+                )
             }
-            Tag::Image(ty, url, title) => {
-                write!(fmt, "({}, \"{}\", \"{}\")", CMarkDisplay(ty), url, title)
+            Tag::Image {
+                link_type,
+                dest_url,
+                title,
+                id,
+            } => {
+                write!(
+                    fmt,
+                    "({}, \"{}\", \"{}\", \"{}\")",
+                    CMarkDisplay(link_type),
+                    dest_url,
+                    title,
+                    id
+                )
+            }
+            Tag::MetadataBlock(MetadataBlockKind::YamlStyle) => {
+                write!(fmt, "(\"yaml style\")")
+            }
+            Tag::MetadataBlock(MetadataBlockKind::PlusesStyle) => {
+                write!(fmt, "(\"pluses style\")")
             }
         }
+    }
+}
+
+impl Display for CMarkDisplay<&pulldown_cmark::TagEnd> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use pulldown_cmark::{MetadataBlockKind, TagEnd};
+
+        let tag_name = get_end_tag_name(self.0);
+        write!(fmt, "/{}", tag_name)?;
+
+        match &self.0 {
+            TagEnd::Paragraph => Ok(()),
+            TagEnd::Heading(level) => write!(fmt, "({})", level,),
+            TagEnd::BlockQuote => Ok(()),
+            TagEnd::CodeBlock => Ok(()),
+            TagEnd::HtmlBlock => Ok(()),
+            TagEnd::List(is_ordered) => write!(fmt, "({})", &is_ordered),
+            TagEnd::Item => Ok(()),
+            TagEnd::FootnoteDefinition => Ok(()),
+            TagEnd::Table => Ok(()),
+            TagEnd::TableHead => Ok(()),
+            TagEnd::TableRow => Ok(()),
+            TagEnd::TableCell => Ok(()),
+            TagEnd::Emphasis => Ok(()),
+            TagEnd::Strong => Ok(()),
+            TagEnd::Strikethrough => Ok(()),
+            TagEnd::Link => Ok(()),
+            TagEnd::Image => Ok(()),
+            TagEnd::MetadataBlock(MetadataBlockKind::YamlStyle) => {
+                write!(fmt, "(\"yaml style\")")
+            }
+            TagEnd::MetadataBlock(MetadataBlockKind::PlusesStyle) => {
+                write!(fmt, "(\"pluses style\")")
+            }
+        }
+    }
+}
+
+impl Display for CMarkDisplay<Option<&str>> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self.0 {
+            Some(value) => write!(fmt, "Some({})", value),
+            None => write!(fmt, "None"),
+        }
+    }
+}
+
+impl Display for CMarkDisplay<&[CowStr<'_>]> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut separator = "";
+        for item in self.0 {
+            write!(fmt, "{}\"{}\"", separator, item)?;
+            separator = ", ";
+        }
+        Ok(())
+    }
+}
+
+impl Display for CMarkDisplay<&[(CowStr<'_>, Option<CowStr<'_>>)]> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut separator = "";
+        for (key, value) in self.0 {
+            write!(fmt, "{}{}", separator, key)?;
+            if let Some(value) = value {
+                write!(fmt, "= \"{}\"", value)?;
+            }
+            separator = ", ";
+        }
+        Ok(())
     }
 }
 

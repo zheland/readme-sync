@@ -68,7 +68,7 @@ pub struct CMarkSpan<'a> {
     pub note: String,
 }
 
-impl<'a> CMarkItem {
+impl CMarkItem {
     /// Creates `CMarkItem` with the specified Event and its note.
     pub fn new(event: Event<'static>, note: Cow<'static, str>) -> Arc<Self> {
         Arc::new(Self::Created { event, note })
