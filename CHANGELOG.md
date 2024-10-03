@@ -6,9 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Update `syn`, `pulldown-cmark`, and `platforms` dependencies.
+- Bump dependencies.
+- Support updated `pulldown-cmark` `Event`s` and `Tag`s.
 - Improve support for ongoing Rust language changes.
-- Minimum supported rustc version is increased from 1.70.0.
+- Minimum supported rustc version is increased from 1.71.1.
 
 ## [0.2.1] - 2021-12-19
 ### Added

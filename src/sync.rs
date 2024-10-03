@@ -6,6 +6,7 @@
 ))]
 
 use core::fmt::Display;
+use std::borrow::ToOwned;
 use std::path::Path;
 use std::string::String;
 
@@ -191,16 +192,16 @@ fn node_not_mached_diagnostic(
     let message = match (readme_event, docs_event) {
         (Some(readme_event), Some(docs_event)) => format!(
             "readme node\n`{}`\n does not match docs node\n`{}`",
-            CMarkDisplay(readme_event),
-            CMarkDisplay(docs_event)
+            FmtPrint(readme_event),
+            FmtPrint(docs_event)
         ),
         (Some(readme_event), None) => format!(
             "readme node\n`{}`\n does not match any docs node",
-            CMarkDisplay(readme_event)
+            FmtPrint(readme_event)
         ),
         (None, Some(docs_event)) => format!(
             "docs node\n`{}`\n does not match any readme node",
-            CMarkDisplay(docs_event)
+            FmtPrint(docs_event)
         ),
         (None, None) => unreachable!(),
     };
@@ -356,8 +357,8 @@ fn event_diff_notes(
     }
 
     vec![
-        text_note(format!("readme node: {}", CMarkDisplay(readme_event))),
-        text_note(format!("docs   node: {}", CMarkDisplay(docs_event))),
+        text_note(format!("readme node: {}", FmtPrint(readme_event))),
+        text_note(format!("docs   node: {}", FmtPrint(docs_event))),
     ]
 }
 
@@ -369,13 +370,17 @@ fn previous_events_notes(events: &[pulldown_cmark::Event<'_>]) -> codemap_diagno
 
     if events.is_empty() {
         text_note("match failed on first events".to_string())
-    } else if events.len() <= MAX_EVENTS_SHOWN {
-        text_note(format!("previous events: [\n{}]", CMarkDisplay(events)))
     } else {
-        text_note(format!(
-            "previous events: [\n    ...,\n{}]",
-            CMarkDisplay(&events[events.len() - MAX_EVENTS_SHOWN..])
-        ))
+        let from = events.len().saturating_sub(MAX_EVENTS_SHOWN);
+        let mut note = "previous events: [\n".to_owned();
+        if from != 0 {
+            note += "    ...\n";
+        }
+        for event in &events[from..] {
+            note += &format!("    {}\n", FmtPrint(event));
+        }
+        note += "]";
+        text_note(note)
     }
 }
 
@@ -445,6 +450,8 @@ fn get_event_name<'a>(event: &pulldown_cmark::Event<'_>) -> &'a str {
         Event::End(..) => "End",
         Event::Text(..) => "Text",
         Event::Code(..) => "Code",
+        Event::InlineMath(..) => "InlineMath",
+        Event::DisplayMath(..) => "DisplayMath",
         Event::Html(..) => "Html",
         Event::InlineHtml(..) => "InlineHtml",
         Event::FootnoteReference(..) => "FootnoteReference",
@@ -460,12 +467,15 @@ fn get_start_tag_name<'a>(tag: &'a pulldown_cmark::Tag<'_>) -> &'a str {
     match tag {
         Tag::Paragraph => "Paragraph",
         Tag::Heading { .. } => "Heading",
-        Tag::BlockQuote => "BlockQuote",
+        Tag::BlockQuote(..) => "BlockQuote",
         Tag::CodeBlock(..) => "CodeBlock",
         Tag::HtmlBlock { .. } => "HtmlBlock",
         Tag::List(..) => "List",
         Tag::Item => "Item",
         Tag::FootnoteDefinition(..) => "FootnoteDefinition",
+        Tag::DefinitionList => "DefinitionList",
+        Tag::DefinitionListTitle => "DefinitionListTitle",
+        Tag::DefinitionListDefinition => "DefinitionListDefinition",
         Tag::Table(..) => "Table",
         Tag::TableHead => "TableHead",
         Tag::TableRow => "TableRow",
@@ -484,12 +494,15 @@ fn get_end_tag_name(tag: &pulldown_cmark::TagEnd) -> &str {
     match tag {
         TagEnd::Paragraph => "Paragraph",
         TagEnd::Heading { .. } => "Heading",
-        TagEnd::BlockQuote => "BlockQuote",
+        TagEnd::BlockQuote(..) => "BlockQuote",
         TagEnd::CodeBlock => "CodeBlock",
         TagEnd::HtmlBlock { .. } => "HtmlBlock",
         TagEnd::List(..) => "List",
         TagEnd::Item => "Item",
         TagEnd::FootnoteDefinition => "FootnoteDefinition",
+        TagEnd::DefinitionList => "DefinitionList",
+        TagEnd::DefinitionListTitle => "DefinitionListTitle",
+        TagEnd::DefinitionListDefinition => "DefinitionListDefinition",
         TagEnd::Table => "Table",
         TagEnd::TableHead => "TableHead",
         TagEnd::TableRow => "TableRow",
@@ -503,39 +516,97 @@ fn get_end_tag_name(tag: &pulldown_cmark::TagEnd) -> &str {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct CMarkDisplay<T>(T);
+pub trait Print {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result;
+}
 
-impl Display for CMarkDisplay<&[pulldown_cmark::Event<'_>]> {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        for item in self.0 {
-            writeln!(fmt, "    {},", CMarkDisplay(item))?;
-        }
-        Ok(())
+#[derive(Clone, Debug)]
+pub struct FmtPrint<T>(T);
+
+impl<T> Display for FmtPrint<T>
+where
+    T: Print,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        T::fmt(&self.0, f)
     }
 }
 
-impl Display for CMarkDisplay<Option<&pulldown_cmark::Event<'_>>> {
+impl<T> Print for &T
+where
+    T: ?Sized + Print,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        T::fmt(self, f)
+    }
+}
+
+impl<T> Print for Option<T>
+where
+    T: Print,
+{
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self.0 {
-            Some(value) => write!(fmt, "Some({})", CMarkDisplay(value)),
+        match self {
+            Some(value) => write!(fmt, "Some({})", FmtPrint(value)),
             None => write!(fmt, "None"),
         }
     }
 }
 
-impl Display for CMarkDisplay<&pulldown_cmark::Event<'_>> {
+impl<T> Print for [T]
+where
+    T: Print,
+{
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut iter = self.iter();
+        writeln!(fmt, "[")?;
+        if let Some(first) = iter.next() {
+            writeln!(fmt, "{}", FmtPrint(first))?;
+            for item in iter {
+                writeln!(fmt, ", {}", FmtPrint(item))?;
+            }
+        }
+        writeln!(fmt, "]")?;
+        Ok(())
+    }
+}
+
+impl Print for str {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(fmt, "{}", self)
+    }
+}
+
+impl Print for CowStr<'_> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(fmt, "{}", self)
+    }
+}
+
+impl<T1, T2> Print for (T1, T2)
+where
+    T1: Print,
+    T2: Print,
+{
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(fmt, "({}, {})", FmtPrint(&self.0), FmtPrint(&self.1))
+    }
+}
+
+impl Print for pulldown_cmark::Event<'_> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::Event;
 
-        let event_name = get_event_name(self.0);
+        let event_name = get_event_name(self);
         write!(fmt, "{}", event_name)?;
 
-        match &self.0 {
-            Event::Start(tag) => write!(fmt, "({})", CMarkDisplay(tag)),
-            Event::End(tag) => write!(fmt, "({})", CMarkDisplay(tag)),
+        match self {
+            Event::Start(tag) => write!(fmt, "({})", FmtPrint(tag)),
+            Event::End(tag) => write!(fmt, "({})", FmtPrint(tag)),
             Event::Text(text)
             | Event::Code(text)
+            | Event::InlineMath(text)
+            | Event::DisplayMath(text)
             | Event::Html(text)
             | Event::InlineHtml(text)
             | Event::FootnoteReference(text) => write!(fmt, "(\"{}\")", &text),
@@ -547,14 +618,14 @@ impl Display for CMarkDisplay<&pulldown_cmark::Event<'_>> {
     }
 }
 
-impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
+impl Print for pulldown_cmark::Tag<'_> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::{MetadataBlockKind, Tag};
 
-        let tag_name = get_start_tag_name(self.0);
+        let tag_name = get_start_tag_name(self);
         write!(fmt, "{}", tag_name)?;
 
-        match &self.0 {
+        match self {
             Tag::Paragraph => Ok(()),
             Tag::Heading {
                 level,
@@ -565,18 +636,21 @@ impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
                 fmt,
                 "({}, \"{}\", {}, {})",
                 level,
-                CMarkDisplay(id.as_deref()),
-                CMarkDisplay(classes.as_slice()),
-                CMarkDisplay(attrs.as_slice())
+                FmtPrint(id.as_deref()),
+                FmtPrint(classes.as_slice()),
+                FmtPrint(attrs.as_slice())
             ),
-            Tag::BlockQuote => Ok(()),
-            Tag::CodeBlock(kind) => write!(fmt, "({})", CMarkDisplay(kind)),
+            Tag::BlockQuote(kind) => write!(fmt, "({})", FmtPrint(kind)),
+            Tag::CodeBlock(kind) => write!(fmt, "({})", FmtPrint(kind)),
             Tag::HtmlBlock => Ok(()),
             Tag::List(Some(first)) => write!(fmt, "(Some({}))", first),
             Tag::List(None) => write!(fmt, "(None)"),
             Tag::Item => Ok(()),
             Tag::FootnoteDefinition(label) => write!(fmt, "(\"{}\")", &label),
-            Tag::Table(alignment) => write!(fmt, "({})", CMarkDisplay(&alignment[..])),
+            Tag::DefinitionList => Ok(()),
+            Tag::DefinitionListTitle => Ok(()),
+            Tag::DefinitionListDefinition => Ok(()),
+            Tag::Table(alignment) => write!(fmt, "({})", FmtPrint(&alignment[..])),
             Tag::TableHead => Ok(()),
             Tag::TableRow => Ok(()),
             Tag::TableCell => Ok(()),
@@ -592,7 +666,7 @@ impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
                 write!(
                     fmt,
                     "({}, \"{}\", \"{}\", \"{}\")",
-                    CMarkDisplay(link_type),
+                    FmtPrint(link_type),
                     dest_url,
                     title,
                     id
@@ -607,7 +681,7 @@ impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
                 write!(
                     fmt,
                     "({}, \"{}\", \"{}\", \"{}\")",
-                    CMarkDisplay(link_type),
+                    FmtPrint(link_type),
                     dest_url,
                     title,
                     id
@@ -623,22 +697,25 @@ impl Display for CMarkDisplay<&pulldown_cmark::Tag<'_>> {
     }
 }
 
-impl Display for CMarkDisplay<&pulldown_cmark::TagEnd> {
+impl Print for pulldown_cmark::TagEnd {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::{MetadataBlockKind, TagEnd};
 
-        let tag_name = get_end_tag_name(self.0);
+        let tag_name = get_end_tag_name(self);
         write!(fmt, "/{}", tag_name)?;
 
-        match &self.0 {
+        match self {
             TagEnd::Paragraph => Ok(()),
-            TagEnd::Heading(level) => write!(fmt, "({})", level,),
-            TagEnd::BlockQuote => Ok(()),
+            TagEnd::Heading(level) => write!(fmt, "({})", level),
+            TagEnd::BlockQuote(kind) => write!(fmt, "({})", FmtPrint(kind)),
             TagEnd::CodeBlock => Ok(()),
             TagEnd::HtmlBlock => Ok(()),
             TagEnd::List(is_ordered) => write!(fmt, "({})", &is_ordered),
             TagEnd::Item => Ok(()),
             TagEnd::FootnoteDefinition => Ok(()),
+            TagEnd::DefinitionList => Ok(()),
+            TagEnd::DefinitionListTitle => Ok(()),
+            TagEnd::DefinitionListDefinition => Ok(()),
             TagEnd::Table => Ok(()),
             TagEnd::TableHead => Ok(()),
             TagEnd::TableRow => Ok(()),
@@ -658,70 +735,22 @@ impl Display for CMarkDisplay<&pulldown_cmark::TagEnd> {
     }
 }
 
-impl Display for CMarkDisplay<Option<&str>> {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self.0 {
-            Some(value) => write!(fmt, "Some({})", value),
-            None => write!(fmt, "None"),
-        }
-    }
-}
-
-impl Display for CMarkDisplay<&[CowStr<'_>]> {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut separator = "";
-        for item in self.0 {
-            write!(fmt, "{}\"{}\"", separator, item)?;
-            separator = ", ";
-        }
-        Ok(())
-    }
-}
-
-impl Display for CMarkDisplay<&[(CowStr<'_>, Option<CowStr<'_>>)]> {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut separator = "";
-        for (key, value) in self.0 {
-            write!(fmt, "{}{}", separator, key)?;
-            if let Some(value) = value {
-                write!(fmt, "= \"{}\"", value)?;
-            }
-            separator = ", ";
-        }
-        Ok(())
-    }
-}
-
-impl Display for CMarkDisplay<&pulldown_cmark::CodeBlockKind<'_>> {
+impl Print for pulldown_cmark::CodeBlockKind<'_> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::CodeBlockKind;
 
-        match self.0 {
+        match self {
             CodeBlockKind::Indented => write!(fmt, "Indented"),
             CodeBlockKind::Fenced(tag) => write!(fmt, "Fenced({})", tag),
         }
     }
 }
 
-impl Display for CMarkDisplay<&[pulldown_cmark::Alignment]> {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut iter = self.0.iter();
-        let first = iter.next();
-        if let Some(first) = first {
-            write!(fmt, "{}", CMarkDisplay(first))?;
-        }
-        for item in iter {
-            write!(fmt, ", {}", CMarkDisplay(item))?;
-        }
-        Ok(())
-    }
-}
-
-impl Display for CMarkDisplay<&pulldown_cmark::Alignment> {
+impl Print for pulldown_cmark::Alignment {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::Alignment;
 
-        match self.0 {
+        match self {
             Alignment::None => write!(fmt, "None"),
             Alignment::Left => write!(fmt, "Left"),
             Alignment::Center => write!(fmt, "Center"),
@@ -730,11 +759,11 @@ impl Display for CMarkDisplay<&pulldown_cmark::Alignment> {
     }
 }
 
-impl Display for CMarkDisplay<&pulldown_cmark::LinkType> {
+impl Print for pulldown_cmark::LinkType {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         use pulldown_cmark::LinkType;
 
-        match self.0 {
+        match self {
             LinkType::Inline => write!(fmt, "Inline"),
             LinkType::Reference => write!(fmt, "Reference"),
             LinkType::ReferenceUnknown => write!(fmt, "ReferenceUnknown"),
@@ -744,6 +773,20 @@ impl Display for CMarkDisplay<&pulldown_cmark::LinkType> {
             LinkType::ShortcutUnknown => write!(fmt, "ShortcutUnknown"),
             LinkType::Autolink => write!(fmt, "Autolink"),
             LinkType::Email => write!(fmt, "Email"),
+        }
+    }
+}
+
+impl Print for pulldown_cmark::BlockQuoteKind {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use pulldown_cmark::BlockQuoteKind;
+
+        match self {
+            BlockQuoteKind::Note => write!(fmt, "Note"),
+            BlockQuoteKind::Tip => write!(fmt, "Tip"),
+            BlockQuoteKind::Important => write!(fmt, "Important"),
+            BlockQuoteKind::Warning => write!(fmt, "Warning"),
+            BlockQuoteKind::Caution => write!(fmt, "Caution"),
         }
     }
 }

@@ -10,5 +10,6 @@ pub fn codeblock_rust_test_tags() -> &'static [&'static str] {
         "compile_fail",
         "edition2015",
         "edition2018",
+        "edition2021",
     ]
 }
