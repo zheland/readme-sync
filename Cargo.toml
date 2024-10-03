@@ -5,12 +5,12 @@ authors = ["Andrey Zheleznov <zheland.net@gmail.com>"]
 edition = "2021"
 rust-version = "1.71.1"
 description = "Checks that your readme and documentation are synchronized"
+documentation = "https://docs.rs/readme-sync"
 readme = "README.md"
 repository = "https://github.com/zheland/readme-sync"
-documentation = "https://docs.rs/readme-sync"
 license = "MIT OR Apache-2.0"
-categories = ["development-tools::testing"]
 keywords = ["assert", "test", "sync", "readme", "docs"]
+categories = ["development-tools::testing"]
 
 [features]
 default = [
@@ -73,5 +73,9 @@ optional = true
 [dev-dependencies]
 version-sync = "0.9.5"
 
+[badges.maintenance]
+status = "passively-maintained"
+
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
