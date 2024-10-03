@@ -465,7 +465,6 @@ impl CMarkData {
             } = tag
             {
                 let new_url = func(dest_url.as_ref());
-                std::println!("from: {}\nto: {}", dest_url.as_ref(), new_url.as_ref());
                 if dest_url.as_ref() != new_url.as_ref() {
                     let title = title.clone();
                     return Some(Tag::Link {
