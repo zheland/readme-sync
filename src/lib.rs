@@ -20,7 +20,7 @@
 //!
 //! ```toml
 //! [dev-dependencies]
-//! readme-sync = "0.2.1"
+//! readme-sync = "0.3.0"
 //! ```
 //!
 //! Then add an integration test using the necessary readme and docs modifiers,
