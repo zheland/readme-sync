@@ -1,5 +1,3 @@
-#![cfg(feature = "glob")]
-
 use std::vec::Vec;
 
 use glob::Pattern;

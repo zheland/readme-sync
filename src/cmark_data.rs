@@ -1,5 +1,3 @@
-#![cfg(feature = "pulldown-cmark")]
-
 use core::slice::Iter;
 use std::borrow::Cow;
 use std::string::String;
@@ -7,7 +5,6 @@ use std::sync::Arc;
 use std::vec::Vec;
 
 use pulldown_cmark::Event;
-#[cfg(feature = "thiserror")]
 use thiserror::Error;
 
 use crate::{CMarkItem, File, FileDocs, TextSource};
@@ -280,7 +277,6 @@ impl CMarkData {
     }
 
     /// Removes first paragraph that contains only badges.
-    #[cfg(feature = "glob")]
     pub fn remove_badges_paragraph(self) -> Self {
         let patterns = crate::badge_url_patterns();
         self.remove_images_only_paragraph(|image_urls| {
@@ -375,7 +371,6 @@ fn is_matched_section(section: &[Arc<CMarkItem>], heading: &str, level: u32) -> 
 impl CMarkData {
     /// Returns self if absolute blob links to the specified repository not found,
     /// otherwise returns an error.
-    #[cfg(feature = "thiserror")]
     pub fn disallow_absolute_blob_links(
         self,
         repository_url: &str,
@@ -385,7 +380,6 @@ impl CMarkData {
 
     /// Returns self if absolute docs links to the specified repository not found,
     /// otherwise returns an error.
-    #[cfg(feature = "thiserror")]
     pub fn disallow_absolute_docs_links(
         self,
         package_name: &str,
@@ -395,7 +389,6 @@ impl CMarkData {
     }
 
     /// Returns self if links with the specified prefix not found, otherwise returns an error.
-    #[cfg(feature = "thiserror")]
     pub fn disallow_urls_with_prefix(
         self,
         prefix: &str,
@@ -677,7 +670,6 @@ impl CMarkData {
 }
 
 /// An error which can occur when checking for disallowed link prefixes.
-#[cfg(feature = "thiserror")]
 #[derive(Clone, Debug, Error)]
 pub enum DisallowUrlsWithPrefixError {
     /// A prefix found

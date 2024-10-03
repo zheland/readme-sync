@@ -1,5 +1,3 @@
-#![cfg(feature = "pulldown-cmark")]
-
 use core::ops::Range;
 use std::borrow::Cow;
 use std::boxed::Box;

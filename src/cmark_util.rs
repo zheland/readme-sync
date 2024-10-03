@@ -1,5 +1,3 @@
-#![cfg(feature = "pulldown-cmark")]
-
 use std::vec::Vec;
 
 use pulldown_cmark::{CodeBlockKind, CowStr, Event, Tag, TagEnd};

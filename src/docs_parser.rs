@@ -1,9 +1,7 @@
 use std::borrow::Cow;
 
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 use thiserror::Error;
 
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 use crate::Config;
 
 /// Parsed documentation text chunk.
@@ -33,19 +31,10 @@ pub struct DocsLineColumn {
     pub column: usize,
 }
 
-#[cfg(feature = "syn")]
 impl From<&syn::LitStr> for DocsItem {
-    #[cfg(feature = "proc-macro2")]
     fn from(lit_str: &syn::LitStr) -> Self {
         let text = Cow::from(lit_str.value());
         let span = Some(DocsSpan::from(lit_str.span()));
-        Self { text, span }
-    }
-
-    #[cfg(not(feature = "proc-macro2"))]
-    fn from(lit_str: &syn::LitStr) -> Self {
-        let text = Cow::from(lit_str.value());
-        let span = None;
         Self { text, span }
     }
 }
@@ -59,7 +48,6 @@ impl From<&'static str> for DocsItem {
     }
 }
 
-#[cfg(feature = "proc-macro2")]
 impl From<proc_macro2::Span> for DocsSpan {
     fn from(span: proc_macro2::Span) -> Self {
         let start = span.start();
@@ -78,7 +66,6 @@ impl From<proc_macro2::Span> for DocsSpan {
 }
 
 /// Builds documentation from the specified attribute.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 pub fn build_attr_docs(
     attr: &syn::Attribute,
     config: &Config<'_>,
@@ -87,7 +74,6 @@ pub fn build_attr_docs(
 }
 
 /// Builds documentation from the specified compile-time structured attribute.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 pub fn build_meta_docs(
     meta: &syn::Meta,
     config: &Config<'_>,
@@ -145,7 +131,6 @@ pub fn build_meta_docs(
 }
 
 /// Evaluates configuration predicate.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 pub fn eval_cfg_predicate(
     meta: &syn::Meta,
     config: &Config<'_>,
@@ -221,7 +206,6 @@ impl syn::parse::Parse for PunctuatedMetaArgs {
 }
 
 /// An error which can occur when building documentation from attribute.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 #[derive(Clone, Debug, Error)]
 pub enum BuildAttrDocsError {
     /// Attribute parser error.
@@ -233,7 +217,6 @@ pub enum BuildAttrDocsError {
 }
 
 /// An error which can occur when building documentation from meta-attribute.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
 pub enum BuildMetaDocsError {
     /// Non-string doc attribute input.
@@ -257,7 +240,6 @@ pub enum BuildMetaDocsError {
 }
 
 /// An error which can occur when evaluating configuration predicate.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
 pub enum EvalCfgPredicateError {
     /// Non-indentifier predicatge path.

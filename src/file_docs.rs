@@ -4,12 +4,9 @@ use std::string::String;
 use std::sync::Arc;
 use std::vec::Vec;
 
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 use thiserror::Error;
 
-#[cfg(all(feature = "syn", feature = "thiserror"))]
-use crate::Config;
-use crate::File;
+use crate::{Config, File};
 
 /// Parsed `.rs` file documentation.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -33,7 +30,6 @@ pub struct TextRemap {
 
 impl FileDocs {
     /// Creates file documentations from the specified file with the specified features.
-    #[cfg(all(feature = "syn", feature = "thiserror"))]
     pub fn from_file(file: Arc<File>, config: &Config<'_>) -> Result<Self, FileDocsFromFileError> {
         use crate::build_attr_docs;
 
@@ -124,7 +120,6 @@ impl Ord for TextRemap {
 }
 
 /// An error which can occur when creating file documentation form a given file.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 #[derive(Clone, Debug, Error)]
 pub enum FileDocsFromFileError {
     /// File parsing error

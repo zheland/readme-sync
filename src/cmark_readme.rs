@@ -1,16 +1,13 @@
-#![cfg(feature = "pulldown-cmark")]
-
-#[cfg(feature = "thiserror")]
 use std::path::Path;
 use std::sync::Arc;
 
 use pulldown_cmark::Event;
-#[cfg(feature = "thiserror")]
 use thiserror::Error;
 
-use crate::{CMarkData, CMarkDataIter, File, Manifest, Package};
-#[cfg(feature = "thiserror")]
-use crate::{DisallowUrlsWithPrefixError, FileFromPathError};
+use crate::{
+    CMarkData, CMarkDataIter, DisallowUrlsWithPrefixError, File, FileFromPathError, Manifest,
+    Package,
+};
 
 /// Parsed readme Markdown with optionally specified package path and package manifest.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -20,7 +17,6 @@ pub struct CMarkReadme<P, M> {
     manifest: M,
 }
 
-#[cfg(feature = "thiserror")]
 impl<'a> CMarkReadme<&'a Path, &'a Manifest> {
     /// Creates readme from package.
     ///
@@ -127,7 +123,6 @@ impl<'a, P, M> CMarkReadme<P, M> {
         self
     }
 
-    #[cfg(feature = "thiserror")]
     fn map_result<F, E>(mut self, func: F) -> Result<CMarkReadme<P, M>, E>
     where
         F: FnOnce(CMarkData) -> Result<CMarkData, E>,
@@ -160,7 +155,6 @@ impl<'a, P, M> CMarkReadme<P, M> {
     }
 
     /// Removes first paragraph that contains only badges.
-    #[cfg(feature = "glob")]
     pub fn remove_badges_paragraph(self) -> CMarkReadme<P, M> {
         self.map(|data| data.remove_badges_paragraph())
     }
@@ -187,7 +181,6 @@ impl<'a, P, M> CMarkReadme<P, M> {
 
     /// Returns self if absolute blob links to the specified repository not found,
     /// otherwise returns an error.
-    #[cfg(feature = "thiserror")]
     pub fn disallow_absolute_blob_links(
         self,
         repository_url: &str,
@@ -202,7 +195,6 @@ impl<'a, P, M> CMarkReadme<P, M> {
     }
 }
 
-#[cfg(feature = "thiserror")]
 impl<'a, P> CMarkReadme<P, &'a Manifest> {
     /// Returns self if absolute blob links to the manifest repository not found,
     /// otherwise returns an error.
@@ -234,7 +226,6 @@ impl<'a, P> CMarkReadme<P, &'a Manifest> {
 }
 
 /// An error which can occur when creating readme from package.
-#[cfg(feature = "thiserror")]
 #[derive(Debug, Error)]
 pub enum CMarkReadmeFromPackageError {
     /// File reading failed.
@@ -246,7 +237,6 @@ pub enum CMarkReadmeFromPackageError {
 }
 
 /// An error which can occur when checking for disallowed repository blob links.
-#[cfg(feature = "thiserror")]
 #[derive(Clone, Debug, Error)]
 pub enum DisallowAbsoluteRepositoryBlobLinksError {
     /// A disallowed prefix found.
@@ -259,7 +249,6 @@ pub enum DisallowAbsoluteRepositoryBlobLinksError {
 
 /// An error which can occur when converting relative links into absolute ones,
 /// using the manifest repository url as the root address.
-#[cfg(feature = "thiserror")]
 #[derive(Clone, Copy, Debug, Error)]
 pub enum UseAbsoluteRepositoryBlobUrlsError {
     #[error("Manifest does not contain package.documentation field")]

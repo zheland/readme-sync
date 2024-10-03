@@ -1,8 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::Manifest;
-#[cfg(all(feature = "toml", feature = "serde", feature = "thiserror"))]
-use crate::TomlReadError;
+use crate::{Manifest, TomlReadError};
 
 /// A struct contains package manifest and its root path.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -15,7 +13,6 @@ pub struct Package {
 
 impl Package {
     /// Creates a package from the specified path.
-    #[cfg(all(feature = "toml", feature = "serde", feature = "thiserror"))]
     pub fn from_path(path: PathBuf) -> Result<Self, TomlReadError> {
         Ok(Self {
             manifest: Manifest::from_package_path(&path)?,

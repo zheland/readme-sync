@@ -1,10 +1,3 @@
-#![cfg(all(
-    feature = "codemap",
-    feature = "codemap-diagnostic",
-    feature = "pulldown-cmark",
-    feature = "thiserror",
-))]
-
 use core::fmt::Display;
 use std::borrow::ToOwned;
 use std::path::Path;
@@ -96,7 +89,6 @@ pub fn check_sync<P1, P2, M1, M2>(
 }
 
 /// An error which can occur when checking readme and docs for equality.
-#[cfg(feature = "thiserror")]
 #[derive(Clone, Debug, Error)]
 pub enum CheckSyncError {
     /// Readme and docs are not the same.

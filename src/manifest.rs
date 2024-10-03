@@ -1,13 +1,10 @@
 use std::collections::{HashMap, HashSet};
-#[cfg(all(feature = "toml", feature = "thiserror"))]
 use std::io;
 use std::path::{Path, PathBuf};
 use std::string::String;
 use std::vec::Vec;
 
-#[cfg(feature = "serde")]
 use serde::Deserialize;
-#[cfg(all(feature = "toml", feature = "thiserror"))]
 use thiserror::Error;
 
 /// Package manifest.
@@ -16,8 +13,7 @@ use thiserror::Error;
 /// locating and parsing readme and library documentation.
 ///
 /// See <https://doc.rust-lang.org/cargo/reference/manifest.html> for more details.
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct Manifest {
     /// Defines a package.
     pub package: ManifestPackage,
@@ -30,15 +26,14 @@ pub struct Manifest {
     /// Package library dependencies.
     pub dependencies: Option<HashMap<String, ManifestDependency>>,
     /// Metadata that customize docs.rs builds.
-    #[cfg_attr(feature = "serde", serde(rename = "package.metadata.docs.rs"))]
+    #[serde(rename = "package.metadata.docs.rs")]
     pub docs_meta: Option<ManifestDocsRsMetadata>,
 }
 
 /// Package manifest `[package]` section.
 ///
 /// See <https://doc.rust-lang.org/cargo/reference/manifest.html#the-package-section> for more details.
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct ManifestPackage {
     /// The package name that is used to locate main binary,
     /// add package title, disallow package docs links, use absolute package docs links.
@@ -56,8 +51,7 @@ pub struct ManifestPackage {
 /// Package manifest `[lib]` section.
 ///
 /// See <https://doc.rust-lang.org/cargo/reference/cargo-targets.html#library> for more details.
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct ManifestLibTarget {
     /// The name of the target.
     pub name: Option<String>,
@@ -70,8 +64,7 @@ pub struct ManifestLibTarget {
 /// Package manifest `[[bin]]` section.
 ///
 /// See <https://doc.rust-lang.org/cargo/reference/cargo-targets.html#binaries> for more details.
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct ManifestBinTarget {
     /// The name of the target.
     pub name: String,
@@ -84,9 +77,21 @@ pub struct ManifestBinTarget {
 /// Package manifest dependency.
 ///
 /// See <https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html> for more details.
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct ManifestDependency {
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum ManifestDependency {
+    /// Readme path.
+    Version(String),
+    /// If the field is set to true, a default value of README.md will be assumed.
+    /// If the field is set to false, a readme file is defined as absent.
+    Details(ManifestDependencyDetails),
+}
+
+/// Package manifest dependency details.
+///
+/// See <https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html> for more details.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Deserialize)]
+pub struct ManifestDependencyDetails {
     /// Is the dependency is optional and therefore adds a feature with the specified name.
     pub optional: Option<bool>,
 }
@@ -94,19 +99,18 @@ pub struct ManifestDependency {
 /// Manifest metadata that customize docs.rs builds.
 ///
 /// See <https://docs.rs/about/metadata> for more details
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct ManifestDocsRsMetadata {
     /// Features to pass to Cargo (default: []).alloc
     pub features: Option<HashSet<String>>,
     /// Whether to pass `--all-features` to Cargo (default: false).
-    #[cfg_attr(feature = "serde", serde(rename = "all-features"))]
+    #[serde(rename = "all-features")]
     pub all_features: Option<bool>,
     /// Whether to pass `--no-default-features` to Cargo (default: false).
-    #[cfg_attr(feature = "serde", serde(rename = "no-default-features"))]
+    #[serde(rename = "no-default-features")]
     pub no_default_features: Option<bool>,
     /// Target to test build on, used as the default landing page.
-    #[cfg_attr(feature = "serde", serde(rename = "default-target"))]
+    #[serde(rename = "default-target")]
     pub default_target: Option<String>,
     /// Targets to build.
     pub targets: Option<Vec<String>>,
@@ -118,9 +122,8 @@ pub struct ManifestDocsRsMetadata {
 /// exists in the package root, then the name of that file will be used.
 ///
 /// See <https://doc.rust-lang.org/cargo/reference/manifest.html#the-readme-field> for more details.
-#[cfg_attr(feature = "serde", derive(Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+#[serde(untagged)]
 pub enum ManifestReadmePath {
     /// Readme path.
     Path(PathBuf),
@@ -149,13 +152,11 @@ impl Manifest {
     }
 
     /// Creates manifest from `Cargo.toml` file contents.
-    #[cfg(all(feature = "toml", feature = "serde", feature = "thiserror"))]
     pub fn from_cargo_toml_content(content: &str) -> Result<Self, TomlParseError> {
         Ok(toml::from_str(content)?)
     }
 
     /// Reads manifest from a specified file path.
-    #[cfg(all(feature = "toml", feature = "serde", feature = "thiserror"))]
     pub fn from_cargo_toml_path(path: &Path) -> Result<Self, TomlReadError> {
         let content = std::fs::read_to_string(path).map_err(|err| TomlReadError::IoError {
             path: path.to_path_buf(),
@@ -168,7 +169,6 @@ impl Manifest {
     }
 
     /// Reads manifest from the `Cargo.toml` file in the specified package path.
-    #[cfg(all(feature = "toml", feature = "serde", feature = "thiserror"))]
     pub fn from_package_path(path: &Path) -> Result<Self, TomlReadError> {
         Self::from_cargo_toml_path(&path.join("Cargo.toml"))
     }
@@ -227,7 +227,6 @@ impl Manifest {
     /// Returns package relative binary file path by the specified binary target name.
     ///
     /// See <https://doc.rust-lang.org/cargo/commands/cargo-doc.html> for more details.
-    #[cfg(all(feature = "toml", feature = "thiserror"))]
     pub fn relative_bin_path(&self, name: &str) -> Result<PathBuf, BinPathError> {
         use std::string::ToString;
 
@@ -300,14 +299,12 @@ impl Manifest {
             all_features.extend(features.keys().map(Deref::deref));
         }
         if let Some(dependencies) = self.dependencies.as_ref() {
-            all_features.extend(
-                dependencies
-                    .iter()
-                    .filter_map(|(key, dep)| match dep.optional {
-                        Some(true) => Some(key.deref()),
-                        _ => None,
-                    }),
-            );
+            all_features.extend(dependencies.iter().filter_map(|(key, dep)| match dep {
+                ManifestDependency::Details(ManifestDependencyDetails {
+                    optional: Some(true),
+                }) => Some(key.deref()),
+                _ => None,
+            }));
         }
         all_features
     }
@@ -348,7 +345,6 @@ impl Manifest {
 }
 
 /// An error which can occur when parsing manifest from toml file.
-#[cfg(all(feature = "toml", feature = "thiserror"))]
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
 pub enum TomlParseError {
     /// Toml parse error
@@ -357,7 +353,6 @@ pub enum TomlParseError {
 }
 
 /// An error which can occur when reading manifest from the specified file path.
-#[cfg(all(feature = "toml", feature = "thiserror"))]
 #[derive(Debug, Error)]
 pub enum TomlReadError {
     /// File reading failed.
@@ -379,7 +374,6 @@ pub enum TomlReadError {
 }
 
 /// An error which can occur when locating the binary file path by the specified target name.
-#[cfg(all(feature = "toml", feature = "thiserror"))]
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
 pub enum BinPathError {
     /// The binary specified by the target name is not found.

@@ -1,21 +1,14 @@
-#![cfg(feature = "pulldown-cmark")]
-
 use std::borrow::Cow;
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 use std::path::Path;
 use std::sync::Arc;
 
 use pulldown_cmark::Event;
-#[cfg(feature = "thiserror")]
 use thiserror::Error;
 
-#[cfg(feature = "thiserror")]
-use crate::DisallowUrlsWithPrefixError;
-#[cfg(all(feature = "syn", feature = "thiserror"))]
-use crate::FileDocsFromFileError;
-use crate::{CMarkData, CMarkDataIter, FileDocs, Manifest, Package};
-#[cfg(all(feature = "syn", feature = "thiserror"))]
-use crate::{Config, File, FileFromPathError};
+use crate::{
+    CMarkData, CMarkDataIter, Config, DisallowUrlsWithPrefixError, File, FileDocs,
+    FileDocsFromFileError, FileFromPathError, Manifest, Package,
+};
 
 /// Parsed documentation Markdown with optionally specified package path and package manifest.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -25,7 +18,6 @@ pub struct CMarkDocs<P, M> {
     manifest: M,
 }
 
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 impl<'a> CMarkDocs<&'a Path, &'a Manifest> {
     /// Creates docs from package and default config.
     ///
@@ -58,7 +50,6 @@ impl<'a> CMarkDocs<&'a Path, &'a Manifest> {
     }
 }
 
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 impl CMarkDocs<(), ()> {
     /// Creates docs from file and the specified config.
     ///
@@ -91,7 +82,6 @@ impl<'a, P, M> CMarkDocs<P, M> {
     }
 
     /// Creates docs from file, config, package path and manifest.
-    #[cfg(all(feature = "syn", feature = "thiserror"))]
     pub fn from_file_and_config_and_package_path_and_manifest(
         file: Arc<File>,
         config: &Config<'_>,
@@ -167,7 +157,6 @@ impl<'a, P, M> CMarkDocs<P, M> {
         self
     }
 
-    #[cfg(feature = "thiserror")]
     fn map_result<F, E>(mut self, func: F) -> Result<CMarkDocs<P, M>, E>
     where
         F: FnOnce(CMarkData) -> Result<CMarkData, E>,
@@ -249,7 +238,6 @@ impl<'a, P, M> CMarkDocs<P, M> {
 
     /// Returns self if absolute docs links to the specified repository not found,
     /// otherwise returns an error.
-    #[cfg(feature = "thiserror")]
     pub fn disallow_absolute_docs_links(
         self,
         package_name: &str,
@@ -280,7 +268,6 @@ impl<'a, P> CMarkDocs<P, &'a Manifest> {
 
     /// Returns self if absolute docs links to the manifest repository not found,
     /// otherwise returns an error.
-    #[cfg(feature = "thiserror")]
     pub fn disallow_absolute_package_docs_links(
         self,
     ) -> Result<CMarkDocs<P, &'a Manifest>, DisallowAbsolutePackageDocsLinksError> {
@@ -296,7 +283,6 @@ impl<'a, P> CMarkDocs<P, &'a Manifest> {
 
     /// Convert all relative links into absolute ones
     /// using the manifest package documentation url as the root address.
-    #[cfg(feature = "thiserror")]
     pub fn use_absolute_package_docs_urls(
         self,
     ) -> Result<CMarkDocs<P, &'a Manifest>, UseAbsolutePackageDocsUrlsError> {
@@ -320,7 +306,6 @@ impl<'a, P> CMarkDocs<P, &'a Manifest> {
 }
 
 /// An error which can occur when creating docs from package.
-#[cfg(all(feature = "syn", feature = "thiserror"))]
 #[derive(Debug, Error)]
 pub enum CMarkDocsFromPackageError {
     /// File reading failed.
@@ -332,7 +317,6 @@ pub enum CMarkDocsFromPackageError {
 }
 
 /// An error which can occur when checking for disallowed absolute package docs links.
-#[cfg(feature = "thiserror")]
 #[derive(Clone, Debug, Error)]
 pub enum DisallowAbsolutePackageDocsLinksError {
     /// A disallowed prefix found.
@@ -345,7 +329,6 @@ pub enum DisallowAbsolutePackageDocsLinksError {
 
 /// An error which can occur when converting relative links into absolute ones,
 /// using the manifest package documentation url as the root address.
-#[cfg(feature = "thiserror")]
 #[derive(Clone, Copy, Debug, Error)]
 pub enum UseAbsolutePackageDocsUrlsError {
     #[error("Manifest does not contain package.documentation field")]

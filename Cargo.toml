@@ -12,63 +12,23 @@ license = "MIT OR Apache-2.0"
 keywords = ["assert", "test", "sync", "readme", "docs"]
 categories = ["development-tools::testing"]
 
-[features]
-default = [
-    "codemap",
-    "codemap-diagnostic",
-    "glob",
-    "proc-macro2",
-    "pulldown-cmark",
-    "serde",
-    "syn",
-    "thiserror",
-    "toml"
-]
 
-[dependencies.codemap]
-version = "0.1.3"
-optional = true
-
-[dependencies.codemap-diagnostic]
-version = "0.1.2"
-optional = true
-
-[dependencies.glob]
-version = "0.3.1"
-optional = true
-
-[dependencies.platforms]
-version = "3.4.1"
-optional = true
-
-[dependencies.proc-macro2]
-version = "1.0.86"
-optional = true
-default-features = false
-features = ["span-locations"]
-
-[dependencies.pulldown-cmark]
-version = "0.12.1"
-optional = true
-default-features = false
-
-[dependencies.serde]
-version = "1.0.210"
-optional = true
-features = ["derive"]
-
-[dependencies.syn]
-version = "2.0.79"
-optional = true
-features = ["full", "extra-traits"]
-
-[dependencies.thiserror]
-version = "1.0.64"
-optional = true
-
-[dependencies.toml]
-version = "0.8.19"
-optional = true
+[dependencies]
+codemap = "0.1.3"
+codemap-diagnostic = "0.1.2"
+glob = "0.3.1"
+platforms = "3.4.1"
+proc-macro2.version = "1.0.86"
+proc-macro2.default-features = false
+proc-macro2.features = ["span-locations"]
+pulldown-cmark.version = "0.12.1"
+pulldown-cmark.default-features = false
+serde.version = "1.0.210"
+serde.features = ["derive"]
+syn.features = ["full", "extra-traits"]
+syn.version = "2.0.79"
+thiserror = "1.0.64"
+toml = "0.8.19"
 
 [dev-dependencies]
 version-sync = "0.9.5"

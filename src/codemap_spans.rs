@@ -1,12 +1,8 @@
-#![cfg(all(feature = "codemap", feature = "codemap-diagnostic"))]
-
 use std::vec::Vec;
 
 use codemap_diagnostic::SpanLabel;
 
-use crate::CodemapFiles;
-#[cfg(feature = "pulldown-cmark")]
-use crate::{CMarkSpan, TextSource};
+use crate::{CMarkSpan, CodemapFiles, TextSource};
 
 /// Codemap span labels temporary storage used to create diagnostic messages.
 #[derive(Debug)]
@@ -39,7 +35,6 @@ impl<'a> CodemapSpans<'a> {
         self.span_labels
     }
 
-    #[cfg(feature = "pulldown-cmark")]
     /// Generate span labels from the given codemap files and CMark spans.
     pub fn span_labels_from<I>(codemap_files: &'a mut CodemapFiles, iter: I) -> Vec<SpanLabel>
     where
@@ -61,7 +56,6 @@ impl FileSubSpan for codemap::File {
     }
 }
 
-#[cfg(feature = "pulldown-cmark")]
 impl<'a> Extend<CMarkSpan<'a>> for CodemapSpans<'_> {
     fn extend<T: IntoIterator<Item = CMarkSpan<'a>>>(&mut self, iter: T) {
         use codemap_diagnostic::SpanStyle;

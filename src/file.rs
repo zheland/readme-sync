@@ -1,9 +1,7 @@
-#[cfg(feature = "thiserror")]
 use std::io;
 use std::path::{Path, PathBuf};
 use std::string::String;
 
-#[cfg(feature = "thiserror")]
 use thiserror::Error;
 
 /// File path and its contents.
@@ -15,7 +13,6 @@ pub struct File {
 
 impl File {
     /// Reads file from the specified path.
-    #[cfg(feature = "thiserror")]
     pub fn from_path(path: PathBuf, root: Option<&Path>) -> Result<Self, FileFromPathError> {
         use std::fs;
         let content = match root {
@@ -45,7 +42,6 @@ impl File {
 }
 
 /// An error which can occur when reading a file from the specified path.
-#[cfg(feature = "thiserror")]
 #[derive(Debug, Error)]
 pub enum FileFromPathError {
     /// File reading failed.

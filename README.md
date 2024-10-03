@@ -155,52 +155,6 @@ because of some differences between readme content and documentation front page
 including: the presence of a crate name, different heading levels,
 the presence of badges, different relative url root, etc.
 
-### Why are all dependencies optional?
-
-By default, Rust compiler enables features from dev-dependencies for normal dependencies
-for commands like `cargo test` and `cargo build`.
-As a result, the features used by dev-dependencies are implicitly enabled during testing.
-Because all `readme-sync` dependencies are optional,
-you can easily protect your crate from implicitly enabled common features when testing.
-
-See [rust-lang/cargo#7916](https://github.com/rust-lang/cargo/issues/7916) for more details.
-
-### How to prevent `readme-sync` dependency features enabled for dependencies of my crate.
-
-If you use nightly Rust you can simply use `-Z features=dev_dep` flags.
-
-Or, in any Rust release, you can disable all `readme-sync` dependencies with:
-```toml
-[dev-dependencies.readme-sync]
-version = "0.2.1"
-default-features = false
-```
-
-This will help you avoid feature injection from dev-dependencies.
-
-In order to use `readme-sync` functionality in this case,
-you need to add a feature that reenables `readme-sync` default features
-and can be used to run readme synchronization integration tests:
-```toml,no_sync
-[features]
-test-readme-sync = ["readme-sync/default"]
-```
-
-Then you need to add `test-readme-sync` conditional check to your readme sync integration test:
-```rust
-#[cfg(all(test, feature = "test-readme-sync"))]
-//    ^^^^    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-#[test]
-fn readme_sync_test() {
-    // ...
-}
-```
-
-And run it with
-```bash
-cargo test --features "test-readme-sync"
-```
-
 ## License
 
 Licensed under either of
